@@ -38,9 +38,9 @@ static int events_fifo_get(ButtonEvent *button_event);
 #endif
 
 /*********************** 按键配置 ***********************/
-// 按键链表头
+// 按键表头
 static Button *button_list = NULL;
-// 获取按键输入电平的函数指针
+// 获取按键输入的回调函数
 static uint8_t(*read_button_gpio)(uint8_t button_id) = NULL;
 // 按键初始化列表 用户自定义
 static ButtonInitList button_init_list[NUM_OF_BUTTON] = {
@@ -56,6 +56,7 @@ static char* str_button_name[NUM_OF_BUTTON] = {
   "KEY 2",
   "KEY 3",
   "KEY 4",
+/* 用户自定义 */
 };
 // 字符串数组：事件名称
 static char* str_button_event[NUM_OF_EVENT] = {
@@ -70,7 +71,7 @@ static char* str_button_event[NUM_OF_EVENT] = {
   "Long Press Up",
 };
 
-// 按键事件触发及回调函数调用的辅助宏
+// 辅助宏：设置按键事件 并 调用事件回调函数
 #define SET_EVENT_AND_CALL_CB(evt) \
         do {  \
           button->event = (uint8_t)evt; \
@@ -78,7 +79,7 @@ static char* str_button_event[NUM_OF_EVENT] = {
         } while (0)
 
 
-/********************* 静态函数声明 **********************/
+/********************* 私有函数声明 **********************/
 
 static void button_init(Button *button, uint8_t button_id, uint8_t repeat_max,
                         uint8_t long_press, uint8_t act_level, ButtonCallback cb);
@@ -90,10 +91,21 @@ static inline void read_button_gpio_check(void);
 
 /*********************** 函数定义 ***********************/
 
+/**
+ * @brief 注册 获取按键输入信号的 回调函数
+ * 
+ * @param callback 
+ */
 void read_button_gpio_register(uint8_t(*callback)(uint8_t button_id)) {
   read_button_gpio = callback;
 }
 
+/**
+ * @brief 按键列表初始化函数
+ * 
+ * @param init_list 初始化列表
+ * @param button_num 按键数量
+ */
 void button_list_init(ButtonInitList *init_list, uint8_t button_num) {
   assert(init_list);
   ButtonInitList *target;
@@ -106,8 +118,15 @@ void button_list_init(ButtonInitList *init_list, uint8_t button_num) {
   }
 }
 
+/**
+ * @brief 添加按键函数，将Button添加入链表中
+ * 
+ * @param button Button类型指针
+ * @return int 返回0：添加成功，返回-1：添加失败
+ */
 int button_add(Button *button)
 {
+  if (button == NULL) return -1;
 	Button* target = button_list;
 	while(target) {
 		if (target == button) return -1;	// 按键已存在
@@ -118,6 +137,12 @@ int button_add(Button *button)
 	return 0;
 }
 
+/**
+ * @brief 删除按键函数，将Button从链表中删除
+ * 
+ * @param button Button类型指针
+ * @return int 返回0：删除成功，返回-1：删除失败
+ */
 int button_del(Button *button) {
   if (!button_list || !button) return -1;
   if (button_list == button) {
@@ -141,11 +166,11 @@ int button_del(Button *button) {
 /**
  * @brief 按键事件读取函数
  * 
- * @param event_buf 
- * @return int 
+ * @param dst_buf 存放读取数据的内存地址
+ * @return int 返回0：读取成功 返回-1：读取失败
  */
-int button_event_read(ButtonEvent *event_buf) {
-  return events_fifo_get(event_buf);
+int button_event_read(ButtonEvent *dst_buf) {
+  return events_fifo_get(dst_buf);
 }
 
 /**
@@ -155,7 +180,7 @@ int button_event_read(ButtonEvent *event_buf) {
 void button_event_print(void) {
 
   ButtonEvent event_buf;
-  while (events_fifo_get(&event_buf)) {
+  while (!events_fifo_get(&event_buf)) {
     printf("%s:%s\r\n", str_button_name[event_buf.button_id], str_button_event[event_buf.button_event]);
   }
 }
@@ -174,7 +199,7 @@ void button_ticks(void) {
 }
 
 /**
- * @brief multi button事件回调函数
+ * @brief 按键事件回调函数
  * 
  * @param button 
  */
@@ -188,7 +213,7 @@ static void button_event_callback(Button *button) {
 }
 
 /**
- * @brief read_button_gpio函数有效性检查
+ * @brief read_button_gpio回调函数有效性检查
  * 
  */
 static inline void read_button_gpio_check(void) {
