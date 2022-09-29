@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "types.h": "c",
+    "lockfree_fifo.h": "c",
+    "stdint.h": "c",
+    "errno.h": "c",
+    "string.h": "c",
+    "assert.h": "c",
+    "multi_button.h": "c"
+  }
+}
