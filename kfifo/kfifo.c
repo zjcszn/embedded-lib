@@ -1,5 +1,5 @@
 /**
- * @File:    lockfree_fifo.c
+ * @File:    kfifo.c
  * @Author:  zjcszn
  * @Date:    2022-09-25
  * 
@@ -9,7 +9,7 @@
  * 
 */
 
-#include "lockfree_fifo.h"
+#include "kfifo.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,10 +17,10 @@
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 
-#define ROUND_UP 1    /* flag: round up to the power of 2 */
-#define ROUND_DN 0    /* flag: round dn to the power of 2 */
+#define ROUND_UP 1    // 向上调整为2的N次幂
+#define ROUND_DN 0    // 向下调整为2的N次幂
 
-#ifdef USE_LOCKFREE_FIFO_ASSERT
+#ifdef USE_KFIFO_ASSERT
   #define assert_fifo(expr) ((expr) ? (void)0 : assert_fifo_failed((uint8_t *)__FILE__, __LINE__))
   #define assert_fifo_failed(file, line) \
           do {  \
@@ -31,29 +31,29 @@
 #endif
 
 /**
- * @brief check size of fifo buffer
+ * @brief 检查kfifo缓冲区大小是否是2的N次幂
  * 
- * @param size buffer size
- * @return int return 1：is power of 2 ; return 0：is not power of 2 
+ * @param size 缓冲区大小
+ * @return 返回1：是2的N次幂 ; 返回0：不是2的N次幂 
  */
-static inline int check_fifo_size(fifo_t size) {
+static inline int check_fifo_size(kfifo_t size) {
   return (size != 0 && ((size & (size - 1)) == 0));
 }
 
-static fifo_t round_fifo_size(fifo_t size, int mode) {
+static kfifo_t round_fifo_size(kfifo_t size, int mode) {
   assert_fifo(mode == ROUND_UP || mode == ROUND_DN);
   if (!size) return 1UL;
 
-  fifo_t position = 0;
+  kfifo_t position = 0;
   while (size != 0) {
     position ++;
     size = size >> 1UL;    
   }
   position = mode ? position : position - 1; 
-  return ((fifo_t)1UL << position);
+  return ((kfifo_t)1UL << position);
 }
 
-int lockfree_fifo_init(lockfree_fifo *fifo, const uint8_t *buffer_addr, fifo_t buffer_size) {
+int kfifo_init(KFIFO *fifo, const uint8_t *buffer_addr, kfifo_t buffer_size) {
   assert_fifo(fifo);
   if (!check_fifo_size(buffer_size)) {
     buffer_size = round_fifo_size(buffer_size, ROUND_DN);
@@ -64,11 +64,11 @@ int lockfree_fifo_init(lockfree_fifo *fifo, const uint8_t *buffer_addr, fifo_t b
   fifo->size = buffer_size;
   fifo->mask = buffer_size - 1;
 
-  lockfree_fifo_reset(fifo);
+  kfifo_reset(fifo);
   return 0;
 }
 
-int lockfree_fifo_alloc(lockfree_fifo *fifo, fifo_t buffer_size) {
+int kfifo_alloc(KFIFO *fifo, kfifo_t buffer_size) {
   assert_fifo(fifo);
   if (!check_fifo_size(buffer_size)) {
     buffer_size = round_fifo_size(buffer_size, ROUND_UP);
@@ -80,45 +80,45 @@ int lockfree_fifo_alloc(lockfree_fifo *fifo, fifo_t buffer_size) {
   fifo->size = buffer_size;
   fifo->mask = buffer_size - 1;
   
-  lockfree_fifo_reset(fifo);
+  kfifo_reset(fifo);
   return 0;
 }
 
-fifo_t lockfree_fifo_put(lockfree_fifo *fifo, const uint8_t *buffer, fifo_t len) {
+kfifo_t kfifo_put(KFIFO *fifo, const uint8_t *src_buf, kfifo_t len) {
   assert_fifo(fifo);
-  if (lockfree_fifo_is_full(fifo)) return 0;
+  if (kfifo_is_full(fifo)) return 0;
 
-  fifo_t l;
+  kfifo_t l;
   len = min(len, fifo->size - fifo->in + fifo->out);
   l = min(len, fifo->size - (fifo->in & fifo->mask));
 
-  memcpy(fifo->buf + (fifo->in & fifo->mask), buffer, l);
-  memcpy(fifo->buf, buffer + l, len - l);
+  memcpy(fifo->buf + (fifo->in & fifo->mask), src_buf, l);
+  memcpy(fifo->buf, src_buf + l, len - l);
 
   barrier_fifo();
   fifo->in += len;
   return len;
 }
 
-fifo_t lockfree_fifo_get(lockfree_fifo *fifo, uint8_t *buffer, fifo_t len) {
+kfifo_t kfifo_get(KFIFO *fifo, uint8_t *dst_buf, kfifo_t len) {
   assert_fifo(fifo);
-  if (lockfree_fifo_is_empty(fifo)) return 0;
+  if (kfifo_is_empty(fifo)) return 0;
 
-  fifo_t l;
+  kfifo_t l;
   len = min(len, fifo->in - fifo->out);
   l = min(len, fifo->size - (fifo->out & fifo->mask));
 
-  memcpy(buffer, fifo->buf + (fifo->out & fifo->mask), l);
-  memcpy(buffer + l, fifo->buf, len - l);
+  memcpy(dst_buf, fifo->buf + (fifo->out & fifo->mask), l);
+  memcpy(dst_buf + l, fifo->buf, len - l);
 
   barrier_fifo();
   fifo->out += len;
   return len;
 }
 
-fifo_t lockfree_fifo_putc(lockfree_fifo *fifo, uint8_t c) {
+kfifo_t kfifo_putc(KFIFO *fifo, uint8_t c) {
   assert_fifo(fifo);
-  if (lockfree_fifo_is_full(fifo)) return 0;
+  if (kfifo_is_full(fifo)) return 0;
 
   fifo->buf[fifo->in & fifo->mask] = c;
   
@@ -127,9 +127,9 @@ fifo_t lockfree_fifo_putc(lockfree_fifo *fifo, uint8_t c) {
   return 1;
 }
 
-fifo_t lockfree_fifo_getc(lockfree_fifo *fifo, uint8_t *c) {
+kfifo_t kfifo_getc(KFIFO *fifo, uint8_t *c) {
   assert_fifo(fifo);
-  if (lockfree_fifo_is_empty(fifo)) return 0;
+  if (kfifo_is_empty(fifo)) return 0;
 
   *c = fifo->buf[fifo->out & fifo->mask];
   
