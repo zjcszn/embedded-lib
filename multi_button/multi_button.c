@@ -20,7 +20,7 @@
 
 #define TICKS_INTERVAL        ( 10U)  // ticks周期：10ms
 #define TICKS_FILTER          (  2U)  // 按键消抖ticks，消抖时间 = ticks * ticks周期
-#define TICKS_REPEAT_CLICK    ( 30U)  // 按键连击ticks，同上
+#define TICKS_REPEAT_CLICK    ( 20U)  // 按键连击ticks，同上
 #define TICKS_LONG_PRESS      (100U)  // 按键长按ticks，同上
 
 //  multi_button 状态机状态
@@ -52,11 +52,11 @@ static int events_fifo_get(ButtonEvent *button_event);
 #endif
 
 /*********************** 按键配置 ***********************/
-// 按键表头
+// 按键链表
 static Button *button_list = NULL;
 // 获取按键输入的回调函数
 static uint8_t(*read_button_gpio)(uint8_t button_id) = NULL;
-// 按键初始化列表 用户自定义
+// 按键初始化列表
 static ButtonInitList button_init_list[NUM_OF_BUTTON] = {
   /* {按键ID, 最大连击次数，长按事件允许位，按键动作电平, 按键回调函数指针, 按键结构体} */
   {BUTTON_KEY1, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},  
@@ -201,7 +201,7 @@ void button_event_print(void) {
 #endif
 
 /**
- * @brief 按键定时扫描函数
+ * @brief 按键扫描函数
  * 
  */
 void button_ticks(void) {

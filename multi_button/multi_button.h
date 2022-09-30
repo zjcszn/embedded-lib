@@ -117,8 +117,8 @@ int  button_del(Button *button);
 void button_ticks(void);
 
 #ifdef USE_BUTTON_EVENT_FIFO
-// 按键事件FIFO读取函数
-int  button_event_read(ButtonEvent *event_buf);
+// 按键事件读取函数
+int  button_event_read(ButtonEvent *dst_buf);
 // 按键事件打印函数
 void button_event_print(void);
 #endif
