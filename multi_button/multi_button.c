@@ -1,3 +1,17 @@
+/**
+ * @File:    multi_button.c
+ * @Author:  zjcszn
+ * @Date:    2022-09-30
+ * 
+ * Change logs:
+ * Date        Author       Notes
+ * 2022-09-30  zjcszn       First add
+ * 
+ * 
+ * 参考：https://github.com/0x1abin/MultiButton
+ * 
+*/
+
 #include "multi_button.h"
 #include <assert.h>
 #include <string.h>
@@ -326,6 +340,7 @@ static void button_state_update(Button *button) {
 }
 
 #ifdef USE_BUTTON_EVENT_FIFO
+// 写入事件FIFO
 static int events_fifo_put(Button *button) {
   if (EVENT_FIFO_SIZE == events_fifo.in - events_fifo.out) return 0;
   ButtonEvent event_tmp = {
@@ -337,7 +352,7 @@ static int events_fifo_put(Button *button) {
   events_fifo.in++;
   return 1;
 }
-
+// 读取事件FIFO
 static int events_fifo_get(ButtonEvent *button_event) {
   if (events_fifo.in == events_fifo.out) return 0;
   memcpy(button_event, events_fifo.buffer + (events_fifo.out & EVENT_FIFO_MASK), sizeof(ButtonEvent));

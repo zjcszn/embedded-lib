@@ -18,7 +18,9 @@
 //#define USE_LOCKFREE_FIFO_BARRIER // use memory barrier
 //#define USE_LOCKFREE_FIFO_ASSERT  // use assert
 
-#define __IO volatile // This keyword prevents an optimizing compiler from optimizing away subsequent io operate
+#ifndef __IO
+#define __IO volatile
+#endif
 
 #if defined (USE_LOCKFREE_FIFO_BARRIER) && defined (__CORTEX_M)
   #include "cmsis_compiler.h"

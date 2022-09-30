@@ -1,3 +1,17 @@
+/**
+ * @File:    multi_button.h
+ * @Author:  zjcszn
+ * @Date:    2022-09-30
+ * 
+ * Change logs:
+ * Date        Author       Notes
+ * 2022-09-30  zjcszn       First add
+ * 
+ * 
+ * 参考：https://github.com/0x1abin/MultiButton
+ * 
+*/
+
 #ifndef __MULTI_BUTTON_H__
 #define __MULTI_BUTTON_H__
 
