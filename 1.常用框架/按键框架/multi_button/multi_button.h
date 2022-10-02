@@ -21,15 +21,15 @@
 extern "C" {
 #endif
 
-#define ENABLE_EVENT_PRESS_DN           1
-#define ENABLE_EVENT_PRESS_UP           1
-#define ENABLE_EVENT_CLICK              1
-#define ENABLE_EVENT_REPEAT_CLICK       1
-#define ENABLE_EVENT_LONG_PRESS_START   1
-#define ENABLE_EVENT_LONG_PRESS_HOLD    1
-#define ENABLE_EVENT_LONG_PRESS_UP      1
+#define ENABLE_EVENT_PRESS_DN           1   // 允许上报按键按下事件
+#define ENABLE_EVENT_PRESS_UP           1   // 允许上报按键抬起事件
+#define ENABLE_EVENT_CLICK              1   // 允许上报按键点击事件
+#define ENABLE_EVENT_REPEAT_CLICK       1   // 允许上报按键重复点击事件
+#define ENABLE_EVENT_LONG_PRESS_START   1   // 允许上报按键长按开始事件
+#define ENABLE_EVENT_LONG_PRESS_HOLD    1   // 允许上报按键长按保持事件
+#define ENABLE_EVENT_LONG_PRESS_UP      1   // 允许上报按键长按抬起事件
 
-#define USE_BUTTON_EVENT_FIFO   // 使用FIFO推送按键事件
+#define USE_BUTTON_EVENT_FIFO     // 使用FIFO推送按键事件
 
 #define LONGPRESS_ENABLE    (1U)  // 允许触发长按事件
 #define LONGPRESS_DISABLE   (0U)  // 禁止触发长按事件
