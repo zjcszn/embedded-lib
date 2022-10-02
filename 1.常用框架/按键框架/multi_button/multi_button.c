@@ -287,7 +287,9 @@ static void button_state_update(Button *button) {
       if (button->cur_level == button->act_level) {
         button->ticks_cnt = 0;
         button->repeat_cnt = 0;
+        #if ENABLE_EVENT_PRESS_DN == 1
         SET_EVENT_AND_CALL_CB(EVENT_PRESS_DN);
+        #endif
         button->state = (uint8_t)STATE_PRESS_DOWN;
       }
       else {
@@ -299,36 +301,50 @@ static void button_state_update(Button *button) {
       if (!button->long_press || button->ticks_cnt < TICKS_LONG_PRESS) {
         if (button->cur_level != button->act_level) {
           button->ticks_cnt = 0;
+          #if ENABLE_EVENT_PRESS_UP == 1
           SET_EVENT_AND_CALL_CB(EVENT_PRESS_UP);
+          #endif
           button->state = (uint8_t)STATE_CLICK;
         }
       }
       else {
+        #if ENABLE_EVENT_LONG_PRESS_START == 1
         SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_START);
+        #endif
         button->state = (uint8_t)STATE_LONG_PRESS;
       }
       break;
 
     case STATE_CLICK:
       if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_REPEAT_CLICK) {
+        #if ENABLE_EVENT_CLICK == 1
         SET_EVENT_AND_CALL_CB(EVENT_SINGLE_CLICK + button->repeat_cnt);
+        #endif
         button->state = (uint8_t)STATE_IDLE;
       }
       else if (button->cur_level == button->act_level) {
         button->ticks_cnt = 0;
         button->repeat_cnt++;
+        #if ENABLE_EVENT_REPEAT_CLICK == 1
         SET_EVENT_AND_CALL_CB(EVENT_REPEAT_CLICK);
+        #endif
+        #if ENABLE_EVENT_PRESS_DN == 1
         SET_EVENT_AND_CALL_CB(EVENT_PRESS_DN);
+        #endif
         button->state = (uint8_t)STATE_PRESS_DOWN;
       }
       break;
 
     case STATE_LONG_PRESS:
       if (button->cur_level == button->act_level) {
+        #if ENABLE_EVENT_LONG_PRESS_HOLD == 1
         SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_HOLD);
+        #endif
       }
       else {
+        #if ENABLE_EVENT_LONG_PRESS_UP == 1
         SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_UP);
+        #endif
         button->state = (uint8_t)STATE_IDLE;
       }
       break;

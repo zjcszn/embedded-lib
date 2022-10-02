@@ -15,11 +15,19 @@
 #ifndef __MULTI_BUTTON_H__
 #define __MULTI_BUTTON_H__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
+#define ENABLE_EVENT_PRESS_DN           1
+#define ENABLE_EVENT_PRESS_UP           1
+#define ENABLE_EVENT_CLICK              1
+#define ENABLE_EVENT_REPEAT_CLICK       1
+#define ENABLE_EVENT_LONG_PRESS_START   1
+#define ENABLE_EVENT_LONG_PRESS_HOLD    1
+#define ENABLE_EVENT_LONG_PRESS_UP      1
 
 #define USE_BUTTON_EVENT_FIFO   // 使用FIFO推送按键事件
 
