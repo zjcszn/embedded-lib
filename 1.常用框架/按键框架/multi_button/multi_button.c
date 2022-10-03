@@ -320,7 +320,7 @@ static void button_state_update(Button *button) {
       else if (button->cur_level == button->act_level) {
         button->ticks_cnt = 0;
         button->repeat_cnt++;
-        #if ENABLE_EVENT_REPEAT_CLICK == 1
+        #if ENABLE_EVENT_REPEAT_PRESS == 1
         SET_EVENT_AND_CALL_CB(EVENT_REPEAT_PRESS);
         #endif
         button->state = (uint8_t)STATE_PRESS_DOWN;
@@ -350,21 +350,18 @@ static void button_state_update(Button *button) {
 #ifdef USE_BUTTON_EVENT_FIFO
 // 写入事件FIFO
 static int events_fifo_put(Button *button) {
-  if (EVENT_FIFO_SIZE == events_fifo.in - events_fifo.out) return 0;
-  ButtonEvent event_tmp = {
-    .button_id = button->id,
-    .button_event = button->event,    
-  };
-
-  memcpy(events_fifo.buffer + (events_fifo.in & EVENT_FIFO_MASK), &event_tmp, sizeof(ButtonEvent));
+  if (EVENT_FIFO_SIZE == events_fifo.in - events_fifo.out) return -1;
+  uint8_t wr_idx = events_fifo.in & EVENT_FIFO_MASK;
+  events_fifo.buffer[wr_idx].button_id    = button->id;
+  events_fifo.buffer[wr_idx].button_event = button->event;
   events_fifo.in++;
-  return 1;
+  return 0;
 }
 // 读取事件FIFO
 static int events_fifo_get(ButtonEvent *button_event) {
-  if (events_fifo.in == events_fifo.out) return 0;
+  if (events_fifo.in == events_fifo.out) return -1;
   memcpy(button_event, events_fifo.buffer + (events_fifo.out & EVENT_FIFO_MASK), sizeof(ButtonEvent));
   events_fifo.out++;
-  return 1;
+  return 0;
 }
 #endif
