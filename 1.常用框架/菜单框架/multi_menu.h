@@ -19,16 +19,16 @@ enum ENUM_MENU_KEY {
   MENU_KEY_DOWN,    // 下移按键
   MENU_KEY_ENTER,   // 进入按键
   MENU_KEY_ESC,     // 退出按键
+  /* 用户自定义 */
 };
 
 
 struct _menu_page {
   menu_t id;              // Page ID
   const char *name;       // Page 名称
-  MenuPage   *parent;     // 父项指针
   MenuPage   *child;      // 子项指针
-  MenuPage   *brother_l;  // 左兄弟指针
-  MenuPage   *brother_r;  // 右兄弟指针   
+  MenuPage   *left;       // 左兄弟指针
+  MenuPage   *right;      // 右兄弟指针   
   MenuCallback callback;  // MenuPage回调函数
 };
 

@@ -20,8 +20,8 @@
 
 #define TICKS_INTERVAL        ( 10U)  // ticks周期：10ms
 #define TICKS_FILTER          (  2U)  // 按键消抖ticks，消抖时间 = ticks * ticks周期
-#define TICKS_REPEAT_CLICK    ( 20U)  // 按键连击ticks，同上
-#define TICKS_LONG_PRESS      (100U)  // 按键长按ticks，同上
+#define TICKS_REPEAT_PRESS    ( 20U)  // 按键重复按下ticks
+#define TICKS_LONG_PRESS      (100U)  // 按键长按ticks
 
 //  multi_button 状态机状态
 #define  STATE_IDLE         0   // 按键空闲状态 
@@ -70,16 +70,17 @@ static char* str_button_name[NUM_OF_BUTTON] = {
   "KEY 2",
   "KEY 3",
   "KEY 4",
-/* 用户自定义 */
+  // 用户自定义按键
 };
 // 字符串数组：事件名称
 static char* str_button_event[NUM_OF_EVENT] = {
   "None Press",
   "Press Down",
   "Press Up",
-  "Repeat Click",
+  "Repeat Press",
   "Single Click",
   "Double Click",
+  // 用户自定义事件
   "Long Press Start",
   "Long Press Hold",
   "Long Press Up",
@@ -158,22 +159,17 @@ int button_add(Button *button)
  * @return int 返回0：删除成功，返回-1：删除失败
  */
 int button_del(Button *button) {
-  if (!button_list || !button) return -1;
-  if (button_list == button) {
-    button_list = button_list->next;
-    return 0;
+  Button **cur = &button_list;
+  while (*cur) {
+    Button *entry = *cur;
+    if (entry == button) {
+      *cur = entry->next;
+      // free(entry);
+      return 0;
+    }
+    cur = &entry->next;
   }
-
-  Button *pre_node = button_list;
-  while (pre_node != NULL && pre_node->next != button) {
-    pre_node = pre_node->next;
-  }
-
-  if (pre_node == NULL) return -1;
-  else {
-    pre_node->next = button->next;
-  }
-  return 0;
+  return -1;
 }
 
 #ifdef USE_BUTTON_EVENT_FIFO
@@ -192,7 +188,6 @@ int button_event_read(ButtonEvent *dst_buf) {
  * 
  */
 void button_event_print(void) {
-
   ButtonEvent event_buf;
   while (!events_fifo_get(&event_buf)) {
     printf("%s:%s\r\n", str_button_name[event_buf.button_id], str_button_event[event_buf.button_event]);
@@ -316,7 +311,7 @@ static void button_state_update(Button *button) {
       break;
 
     case STATE_CLICK:
-      if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_REPEAT_CLICK) {
+      if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_REPEAT_PRESS) {
         #if ENABLE_EVENT_CLICK == 1
         SET_EVENT_AND_CALL_CB(EVENT_SINGLE_CLICK + button->repeat_cnt);
         #endif
@@ -326,10 +321,7 @@ static void button_state_update(Button *button) {
         button->ticks_cnt = 0;
         button->repeat_cnt++;
         #if ENABLE_EVENT_REPEAT_CLICK == 1
-        SET_EVENT_AND_CALL_CB(EVENT_REPEAT_CLICK);
-        #endif
-        #if ENABLE_EVENT_PRESS_DN == 1
-        SET_EVENT_AND_CALL_CB(EVENT_PRESS_DN);
+        SET_EVENT_AND_CALL_CB(EVENT_REPEAT_PRESS);
         #endif
         button->state = (uint8_t)STATE_PRESS_DOWN;
       }

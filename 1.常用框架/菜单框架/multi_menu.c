@@ -1,97 +1,115 @@
 #include "multi_menu.h"
 #include <string.h>
 
-#define MULTI_MENU_SHOW_ITEM      (4U)
-#define MULTI_MENU_STACK_SIZE     (5U)  // 
+#define MENU_WINDOW_ITEM_NUM      (4U)  // 菜单窗口显示的条项数量
+#define MENU_TREE_DEPTH           (3U)  // 菜单树层级 
+#define MENU_STACK_SIZE           (MENU_TREE_DEPTH - 1) // 菜单窗口配置信息的堆栈大小
 
-static int (*multi_menu_keyevent)(void) = NULL;
+#define CHILD_ID(id)  (((id) << 4U) + 1)
+
+// 菜单按键事件获取函数
+static int (*menu_keyevent)(void) = NULL;
+// 菜单显示窗口 配置信息
 static MenuShowConf menu_show_conf;
 static struct {
-  MenuShowConf stack[MULTI_MENU_STACK_SIZE];
+  MenuShowConf stack[MENU_STACK_SIZE];
   uint8_t sp;
-} multi_menu_stack = {0};
+} menu_stack = {0};
 
-static void menu_show_conf_push(void) {
-  assert(multi_menu_stack.sp < MULTI_MENU_STACK_SIZE);
-  memcpy(&multi_menu_stack.stack[multi_menu_stack.sp++], &menu_show_conf, sizeof(MenuShowConf));
+static MenuPage menu_list[] = {
+  /* Page ID, Page Name, Child, Left, Right, Callback} */
+  {0x00, "Main Menu", NULL, NULL, NULL, NULL},
+  {0x01, "Menu 1",    NULL, NULL, NULL, NULL},
+  {0x11, "Menu 1_1",  NULL, NULL, NULL, NULL},
+  {0x12, "Menu 1_2",  NULL, NULL, NULL, NULL},
+  {0x02, "Menu 2",    NULL, NULL, NULL, NULL},
+  {0x03, "Menu 3",    NULL, NULL, NULL, NULL},
+  {0x04, "Menu 4",    NULL, NULL, NULL, NULL},
+
+};
+
+/********************* 私有函数声明 **********************/
+
+static void menu_show_conf_push(void);
+static void menu_show_conf_pop(void);
+static int menu_process(void);
+static void menu_show_conf_init(MenuPage *cur_page);
+
+
+/*********************** 函数定义 ************************/
+
+
+void menu_keyevent_register(int (*callback)(void)) {
+  menu_keyevent = callback;
 }
 
-static void menu_show_conf_pop(MenuShowConf *dst) {
-  if (multi_menu_stack.sp == 0) return;
-  memcpy(&menu_show_conf, &multi_menu_stack.stack[--multi_menu_stack.sp], sizeof(MenuShowConf));
-}
+static int menu_process(void) {
 
-
-int menu_process(void) {
-
-  int key = multi_menu_keyevent();
+  int key = menu_keyevent();
   switch (key) {
     case MENU_KEY_UP:
-      if (menu_show_conf.cur_item->brother_l != NULL) {
-        menu_show_conf.cur_item = menu_show_conf.cur_item->brother_l;
-        if (menu_show_conf.cur_item == menu_show_conf.head_item->brother_l) {
-
+      if (menu_show_conf.cur_item->left != NULL) {
+        if (menu_show_conf.cur_item == menu_show_conf.head_item) {
+          menu_show_conf.head_item == menu_show_conf.head_item->left;
+          menu_show_conf.tail_item == menu_show_conf.tail_item->left;
         }
+        menu_show_conf.cur_item = menu_show_conf.cur_item->left;
       }
+      break;
 
+    case MENU_KEY_DOWN:
+      if (menu_show_conf.cur_item->right != NULL) {
+        if (menu_show_conf.cur_item == menu_show_conf.tail_item) {
+          menu_show_conf.head_item == menu_show_conf.head_item->right;
+          menu_show_conf.tail_item == menu_show_conf.tail_item->right;
+        }
+        menu_show_conf.cur_item = menu_show_conf.cur_item->right;
+      }
+      break;
+
+    case MENU_KEY_ENTER:
+      if (menu_show_conf.cur_item->child == NULL) {
+        menu_show_conf.cur_item->callback(NULL);
+      }
+      else {
+        menu_show_conf_push();
+        menu_show_conf_init(menu_show_conf.cur_item);
+      }
+      break;
+
+    case MENU_KEY_ESC:
+      menu_show_conf_pop();
+      break;
+
+    default:
+      break;
   }
 
-  /*
-  获取按键事件
-  KEY_UP
-  -->
-  if (cur_item->brother_l != NULL) {
-    cur_item = cur_item->brother_l;
-    if (cur_item = display_start->brother_l) {
-      窗口左移
-    }
-  }
-  KEY_DN
-  -->
-  if (cur_item->brother_r != NULL) {
-    cur_item = cur_item->brother_r;
-    if (cur_item = display_end->brother_r) {
-      窗口右移
-    }
-  }
-  KEY_STB
-  -->
-  if (cur_page->child != NULL) {
-    置callback标志
-    call page_callback;
-  }
-  else{
-    将menu_display 配置压栈
-    cur_page = cur_page->child;
-    初始化 显示窗口
-  }
-  KEY_ESC
-  -->
-  if (cur_page == 0) {
-    退出菜单
-  }
-  else{
-    出栈；
-    cur_page = cur_page->parent;
-    init
-  }
-  */
 }
 
-void menu_init(void) {
-  // 初始化菜单树
-  /*
-
-  for (MenuPage 数组遍历) {
-    Page.parent = Page.id >> 4 除0x10 
-    Page.child  = Page.id << 4 + 1 乘0x10 + 1
-    Page.brother_l = page.id - 1
-    Page.brother_r = page.id + 1
+static void menu_show_conf_init(MenuPage *cur_page) {
+  menu_show_conf.cur_page  = cur_page;
+  menu_show_conf.cur_item  = cur_page->child;
+  menu_show_conf.head_item = menu_show_conf.cur_item;
+  menu_show_conf.tail_item = menu_show_conf.cur_item;
+  for (int i = 1; i < MENU_WINDOW_ITEM_NUM; i++) {
+    if (menu_show_conf.tail_item->right != NULL) {
+      menu_show_conf.tail_item =  menu_show_conf.tail_item->right;
+    }
+    else {
+      break;
+    }
   }
+}
 
-  */
-
-
+void menu_tree_init(MenuPage *page_list, menu_t page_num) {
+  MenuPage *target;
+  for (int i = 0; i < page_num; i++) {
+    target = &page_list[i];    
+    target->child  = page_id_to_pointer((target->id << 4U) + 1);
+    target->left   = target->id ? page_id_to_pointer(target->id - 1) : NULL;
+    target->right  = target->id ? page_id_to_pointer(target->id + 1) : NULL;
+  }
 }
 
 MenuPage *pageid_to_pointer(menu_t id) {
@@ -125,4 +143,15 @@ void menu_show(void) {
     更新改变的条项
 
   */
+}
+
+
+static void menu_show_conf_push(void) {
+  if (menu_stack.sp >= MENU_STACK_SIZE) return;
+  memcpy(&menu_stack.stack[menu_stack.sp++], &menu_show_conf, sizeof(MenuShowConf));
+}
+
+static void menu_show_conf_pop(void) {
+  if (!menu_stack.sp) return;
+  memcpy(&menu_show_conf, &menu_stack.stack[--menu_stack.sp], sizeof(MenuShowConf));
 }

@@ -21,31 +21,25 @@
 extern "C" {
 #endif
 
-#define ENABLE_EVENT_PRESS_DN           1   // 允许上报按键按下事件
-#define ENABLE_EVENT_PRESS_UP           1   // 允许上报按键抬起事件
-#define ENABLE_EVENT_CLICK              1   // 允许上报按键点击事件
-#define ENABLE_EVENT_REPEAT_CLICK       1   // 允许上报按键重复点击事件
-#define ENABLE_EVENT_LONG_PRESS_START   1   // 允许上报按键长按开始事件
-#define ENABLE_EVENT_LONG_PRESS_HOLD    1   // 允许上报按键长按保持事件
-#define ENABLE_EVENT_LONG_PRESS_UP      1   // 允许上报按键长按抬起事件
+#define ENABLE_EVENT_PRESS_DN           1   // 按键按下事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_PRESS_UP           1   // 按键抬起事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_CLICK              1   // 按键点击事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_REPEAT_PRESS       1   // 重复点击事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_LONG_PRESS_START   1   // 长按开始事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_LONG_PRESS_HOLD    1   // 长按保持事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_LONG_PRESS_UP      1   // 长按抬起事件 1：允许触发 0：禁止触发
 
 #define USE_BUTTON_EVENT_FIFO     // 使用FIFO推送按键事件
 
-#define LONGPRESS_ENABLE    (1U)  // 允许触发长按事件
-#define LONGPRESS_DISABLE   (0U)  // 禁止触发长按事件
-
-#define REPEAT_MAX    (1U)  // 最大重复点击次数 0:单击 1:双击 2：三击...
-
-#define ACT_LEVEL_L   (0U)  // 按钮动作电平：低电平
-#define ACT_LEVEL_H   (1U)  // 按钮动作电平：高电平
+#define LONGPRESS_ENABLE    (1U)  // 打开长按功能
+#define LONGPRESS_DISABLE   (0U)  // 禁止长按功能
+#define REPEAT_MAX          (1U)  // 最大重复点击次数 0:单击 1:双击 2：三击...
+#define ACT_LEVEL_L         (0U)  // 按钮动作电平：低电平
+#define ACT_LEVEL_H         (1U)  // 按钮动作电平：高电平
 
 // NULL宏定义
 #ifndef NULL
-    #ifdef __cplusplus
-        #define NULL 0
-    #else
-        #define NULL ((void *)0)
-    #endif
+#define NULL ((void *)0)
 #endif
 
 // multi_button 按键ID枚举列表
@@ -54,7 +48,7 @@ enum ENUM_ButtonID {
   BUTTON_KEY2,
   BUTTON_KEY3,
   BUTTON_KEY4,
-/* 添加自定义按钮 */
+  // 添加自定义按钮
   
   NUM_OF_BUTTON,
 };
@@ -64,9 +58,11 @@ enum ENUM_ButtonEvent {
   EVENT_NULL = 0,           // 空事件
   EVENT_PRESS_DN,           // 按键按下事件
   EVENT_PRESS_UP,           // 按键抬起事件
-  EVENT_REPEAT_CLICK,       // 重复点击事件
+  EVENT_REPEAT_PRESS,       // 重复按下事件
   EVENT_SINGLE_CLICK,       // 单击事件
   EVENT_DOUBLE_CLICK,       // 双击事件
+  // 添加自定义事件
+
   EVENT_LONG_PRESS_START,   // 长按开始事件
   EVENT_LONG_PRESS_HOLD,    // 长按保持事件
   EVENT_LONG_PRESS_UP,      // 长按抬起事件
@@ -89,7 +85,7 @@ typedef struct _button {
   uint8_t   repeat_cnt : 2; // 连击计数器 [0~3]
   uint8_t   repeat_max : 2; // 最大连击次数 [0~3]
   uint8_t   long_press : 1; // 长按功能允许位
-  uint8_t   cur_level : 1;  // 按键输入电平 [0~1]
+  uint8_t   cur_level : 1;  // 按键输入信号 [0~1]
   uint8_t   act_level : 1;  // 按键动作电平 [0~1]
   uint8_t   event : 4;      // 按键事件 [0~15]
   uint8_t   state : 2;      // 按键状态 [0~3]
@@ -104,7 +100,7 @@ typedef struct _button_init_list {
   uint8_t init_repeat_max;  // 最大连击次数
   uint8_t init_long_press;  // 长按功能允许位
   uint8_t init_act_level;   // 按键动作电平
-  ButtonCallback init_cb;   // 按键回调函数指针
+  ButtonCallback init_cb;   // 按键回调函数
   /* 按键结构体 */
   Button  button;
 } ButtonInitList;
