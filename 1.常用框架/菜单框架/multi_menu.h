@@ -1,17 +1,13 @@
 #ifndef __MULTI_MENU_H__
 #define __MULTI_MENU_H__
 
-/* 二叉树结构菜单框架 */
-
 #include <stdint.h>
 
-// Menu无符号整型
+
 typedef uint32_t menu_t;
-// MenuPage结构体类型
-typedef struct _menu_page MenuPage;
-// MenuShowConf结构体类型
+typedef struct _menu_item MenuPage;
+typedef struct _menu_item MenuItem;
 typedef struct _menu_show_conf  MenuShowConf;
-// Menu回调函数
 typedef int (*MenuCallback)(void *);
 
 enum ENUM_MENU_KEY {
@@ -23,13 +19,13 @@ enum ENUM_MENU_KEY {
 };
 
 
-struct _menu_page {
+struct _menu_item {
   menu_t id;              // Page ID
   const char *name;       // Page 名称
-  MenuPage   *child;      // 子项指针
-  MenuPage   *left;       // 左兄弟指针
-  MenuPage   *right;      // 右兄弟指针   
-  MenuCallback callback;  // MenuPage回调函数
+  MenuItem   *child;      // 子菜单指针
+  MenuItem   *l_sibling;  // 左兄弟菜单指针
+  MenuItem   *r_sibling;  // 右兄弟菜单指针   
+  MenuCallback cb;        // 回调函数
 };
 
 struct _menu_show_conf {
@@ -39,5 +35,6 @@ struct _menu_show_conf {
   MenuPage *tail_item;    // 尾显示项
 };
 
+void menu_init(MenuPage *page_list, menu_t page_num);
 
 #endif
