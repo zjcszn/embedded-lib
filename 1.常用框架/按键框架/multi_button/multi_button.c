@@ -19,13 +19,12 @@
 
 
 #define TICKS_INTERVAL          ( 10U)  // ticks周期：10ms
-#define TICKS_FILTER            (  2U)  // 按键消抖ticks，消抖时间 = ticks * ticks周期
+#define TICKS_FILTER            (  2U)  // 按键消抖ticks，20ms
 #define TICKS_PRESS_REPEAT      ( 20U)  // 按键连击ticks，200ms
 #define TICKS_LONG_PRESS        (100U)  // 按键长按ticks，1000ms
+#define TICKS_LONG_PRESS_HOLD   (  5U)  // 长按事件推送间隔，50ms
 
-#define TICKS_LONG_PRESS_HOLD  (  5U)  // 长按事件推送间隔，50ms
-
-//  multi_button 状态机状态
+// multi_button 按键状态
 #define  STATE_IDLE         0   // 按键空闲状态 
 #define  STATE_PRESS_DOWN   1   // 按键按下状态
 #define  STATE_CLICK        2   // 按键单击状态
@@ -54,13 +53,13 @@ static int events_fifo_get(ButtonEvent *button_event);
 #endif
 
 /*********************** 按键配置 ***********************/
-// 按键链表
+// 按键单链表 表头
 static Button *button_list = NULL;
-// 获取按键输入的回调函数
+// 获取按键输入的函数指针
 static uint8_t(*read_button_gpio)(uint8_t button_id) = NULL;
 // 按键初始化列表
 static ButtonInitList button_init_list[NUM_OF_BUTTON] = {
-  /* {按键ID, 最大连击次数，长按事件允许位，按键动作电平, 按键回调函数指针, 按键结构体} */
+  /* {按键ID, 最大连击次数，长按功能开关，按键动作电平, 按键回调函数指针, 按键结构体} */
   {BUTTON_KEY1, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},  
   {BUTTON_KEY2, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},
   {BUTTON_KEY3, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},
@@ -92,7 +91,7 @@ static char* str_button_event[NUM_OF_EVENT] = {
 #define SET_EVENT_AND_CALL_CB(evt) \
         do {  \
           button->event = (uint8_t)evt; \
-          button_event_callback(button); \
+          button_callback(button); \
         } while (0)
 
 
@@ -100,7 +99,7 @@ static char* str_button_event[NUM_OF_EVENT] = {
 
 static void button_init(Button *button, uint8_t button_id, uint8_t repeat_max,
                         uint8_t long_press, uint8_t act_level, ButtonCallback cb);
-static void button_event_callback(Button *button);
+static void button_callback(Button *button);
 static void button_state_update(Button *button);
 static int events_fifo_get(ButtonEvent *button_event);
 static int events_fifo_get(ButtonEvent *button_event);
@@ -214,7 +213,7 @@ void button_ticks(void) {
  * 
  * @param button 
  */
-static void button_event_callback(Button *button) {
+static void button_callback(Button *button) {
 #ifdef USE_BUTTON_EVENT_FIFO
   events_fifo_put(button);
 #endif
