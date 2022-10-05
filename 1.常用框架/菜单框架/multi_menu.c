@@ -6,8 +6,14 @@
 #define MENU_STACK_SIZE           (MENU_DEPTH - 1) // multi menu 堆栈大小
 
 // 按键事件获取函数
-static int (*menu_keyevent)(void) = NULL;
+static int (*menu_read_keyevent)(void) = NULL;
 // 菜单窗口全局配置信息
+
+#define REFRESH_NO      0
+#define REFRESH_ALL     1
+#define REFRESH_PART    2
+
+
 static MenuShowConf menu_show_conf;
 static uint8_t  menu_show_refresh;
 static struct {
@@ -29,8 +35,8 @@ static MenuPage menu_list[] = {
 
 /********************* 私有函数声明 **********************/
 
-static void menu_show_conf_push(void);
-static void menu_show_conf_pop(void);
+static int  menu_show_conf_push(void);
+static int  menu_show_conf_pop(void);
 static int  menu_process(void);
 static void menu_show_conf_init(MenuPage *cur_page);
 static void menu_show(void);
@@ -39,18 +45,21 @@ static void menu_show(void);
 /*********************** 函数定义 ************************/
 
 
-void menu_keyevent_register(int (*callback)(void)) {
-  menu_keyevent = callback;
+void menu_read_keyevent_register(int (*callback)(void)) {
+  menu_read_keyevent = callback;
 }
 
 static int menu_process(void) {
+  menu_show_refresh = REFRESH_NO;
   int key = menu_keyevent();
   switch (key) {
     case MENU_KEY_UP:
       if (menu_show_conf.cur_item->l_sibling != NULL) {
+        menu_show_refresh = REFRESH_PART;
         if (menu_show_conf.cur_item == menu_show_conf.head_item) {
-          menu_show_conf.head_item == menu_show_conf.head_item->l_sibling;
-          menu_show_conf.tail_item == menu_show_conf.tail_item->l_sibling;
+          menu_show_conf.head_item = menu_show_conf.head_item->l_sibling;
+          menu_show_conf.tail_item = menu_show_conf.tail_item->l_sibling;
+          menu_show_refresh = REFRESH_ALL;
         }
         menu_show_conf.cur_item = menu_show_conf.cur_item->l_sibling;
       }
@@ -58,9 +67,11 @@ static int menu_process(void) {
 
     case MENU_KEY_DOWN:
       if (menu_show_conf.cur_item->r_sibling != NULL) {
+        menu_show_refresh = REFRESH_PART;
         if (menu_show_conf.cur_item == menu_show_conf.tail_item) {
           menu_show_conf.head_item == menu_show_conf.head_item->r_sibling;
           menu_show_conf.tail_item == menu_show_conf.tail_item->r_sibling;
+          menu_show_refresh = REFRESH_ALL;
         }
         menu_show_conf.cur_item = menu_show_conf.cur_item->r_sibling;
       }
@@ -73,11 +84,13 @@ static int menu_process(void) {
       else {
         menu_show_conf_push();
         menu_show_conf_init(menu_show_conf.cur_item);
+        menu_show_refresh = REFRESH_ALL;
       }
       break;
 
     case MENU_KEY_ESC:
       menu_show_conf_pop();
+      menu_show_refresh = REFRESH_ALL;
       /*
       if cur_page.id = 0
       add code to exit menu loop
@@ -132,15 +145,22 @@ void menu_loop(void) {
 }
 
 static void menu_show(void) {
-  /*
+  switch (menu_show_refresh) {
+    case REFRESH_NO:
+      /* add code */
+      break;
 
-  if (flag_global_refresh)
-    执行全局刷新流程
+    case REFRESH_ALL:
+      /* add code */
+      break;
+      
+    case REFRESH_PART:
+      /* add code */
+      break;
 
-  else
-    更新改变的条项
-
-  */
+    default:
+      break;
+  }
 }
 
 

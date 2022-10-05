@@ -1,5 +1,5 @@
-#ifndef __SIMPLE_KEYSCAN_H__
-#define __SIMPLE_KEYSCAN_H__
+#ifndef __SIMPLE_BUTTON_H__
+#define __SIMPLE_BUTTON_H__
 
 #include <stdint.h>
 
@@ -9,7 +9,10 @@ enum ENUM_KEY {
   KEY_3,
   KEY_4,
   // 添加自定义按键
+  NUM_OF_KEY,
 };
+
+
 
 
 

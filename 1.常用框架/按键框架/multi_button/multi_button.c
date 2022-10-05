@@ -18,10 +18,12 @@
 #include <stdio.h>
 
 
-#define TICKS_INTERVAL        ( 10U)  // ticks周期：10ms
-#define TICKS_FILTER          (  2U)  // 按键消抖ticks，消抖时间 = ticks * ticks周期
-#define TICKS_REPEAT_PRESS    ( 20U)  // 按键重复按下ticks
-#define TICKS_LONG_PRESS      (100U)  // 按键长按ticks
+#define TICKS_INTERVAL          ( 10U)  // ticks周期：10ms
+#define TICKS_FILTER            (  2U)  // 按键消抖ticks，消抖时间 = ticks * ticks周期
+#define TICKS_PRESS_REPEAT      ( 20U)  // 按键连击ticks，200ms
+#define TICKS_LONG_PRESS        (100U)  // 按键长按ticks，1000ms
+
+#define TICKS_LONG_PRESS_HOLD  (  5U)  // 长按事件推送间隔，50ms
 
 //  multi_button 状态机状态
 #define  STATE_IDLE         0   // 按键空闲状态 
@@ -306,12 +308,13 @@ static void button_state_update(Button *button) {
         #if ENABLE_EVENT_LONG_PRESS_START == 1
         SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_START);
         #endif
+        button->ticks_cnt = 0;
         button->state = (uint8_t)STATE_LONG_PRESS;
       }
       break;
 
     case STATE_CLICK:
-      if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_REPEAT_PRESS) {
+      if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_PRESS_REPEAT) {
         #if ENABLE_EVENT_CLICK == 1
         SET_EVENT_AND_CALL_CB(EVENT_SINGLE_CLICK + button->repeat_cnt);
         #endif
@@ -320,8 +323,8 @@ static void button_state_update(Button *button) {
       else if (button->cur_level == button->act_level) {
         button->ticks_cnt = 0;
         button->repeat_cnt++;
-        #if ENABLE_EVENT_REPEAT_PRESS == 1
-        SET_EVENT_AND_CALL_CB(EVENT_REPEAT_PRESS);
+        #if ENABLE_EVENT_PRESS_REPEAT == 1
+        SET_EVENT_AND_CALL_CB(EVENT_PRESS_REPEAT);
         #endif
         button->state = (uint8_t)STATE_PRESS_DOWN;
       }
@@ -330,7 +333,10 @@ static void button_state_update(Button *button) {
     case STATE_LONG_PRESS:
       if (button->cur_level == button->act_level) {
         #if ENABLE_EVENT_LONG_PRESS_HOLD == 1
-        SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_HOLD);
+        if (button->ticks_cnt >= TICKS_LONG_PRESS_HOLD) {
+          SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_HOLD);
+          button->ticks_cnt = 0;
+        }
         #endif
       }
       else {

@@ -24,7 +24,7 @@ extern "C" {
 #define ENABLE_EVENT_PRESS_DN           1   // 按键按下事件 1：允许触发 0：禁止触发
 #define ENABLE_EVENT_PRESS_UP           1   // 按键抬起事件 1：允许触发 0：禁止触发
 #define ENABLE_EVENT_CLICK              1   // 按键点击事件 1：允许触发 0：禁止触发
-#define ENABLE_EVENT_REPEAT_PRESS       1   // 重复点击事件 1：允许触发 0：禁止触发
+#define ENABLE_EVENT_PRESS_REPEAT       1   // 重复按下事件 1：允许触发 0：禁止触发
 #define ENABLE_EVENT_LONG_PRESS_START   1   // 长按开始事件 1：允许触发 0：禁止触发
 #define ENABLE_EVENT_LONG_PRESS_HOLD    1   // 长按保持事件 1：允许触发 0：禁止触发
 #define ENABLE_EVENT_LONG_PRESS_UP      1   // 长按抬起事件 1：允许触发 0：禁止触发
@@ -33,7 +33,7 @@ extern "C" {
 
 #define LONGPRESS_ENABLE    (1U)  // 打开长按功能
 #define LONGPRESS_DISABLE   (0U)  // 禁止长按功能
-#define REPEAT_MAX          (1U)  // 最大重复点击次数 0:单击 1:双击 2：三击...
+#define REPEAT_MAX          (1U)  // 最大重复按下次数 0:单击 1:双击 2：三击...
 #define ACT_LEVEL_L         (0U)  // 按钮动作电平：低电平
 #define ACT_LEVEL_H         (1U)  // 按钮动作电平：高电平
 
@@ -58,7 +58,7 @@ enum ENUM_ButtonEvent {
   EVENT_NULL = 0,           // 空事件
   EVENT_PRESS_DN,           // 按键按下事件
   EVENT_PRESS_UP,           // 按键抬起事件
-  EVENT_REPEAT_PRESS,       // 重复按下事件
+  EVENT_PRESS_REPEAT,       // 重复按下事件
   EVENT_SINGLE_CLICK,       // 单击事件
   EVENT_DOUBLE_CLICK,       // 双击事件
   // 添加自定义事件

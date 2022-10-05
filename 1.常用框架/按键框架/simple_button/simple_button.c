@@ -1,4 +1,4 @@
-#include "simple_keyscan.h"
+#include "simple_button.h"
 
 
 #ifndef NULL

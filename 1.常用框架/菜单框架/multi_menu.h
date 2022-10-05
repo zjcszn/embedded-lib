@@ -22,17 +22,17 @@ enum ENUM_MENU_KEY {
 struct _menu_item {
   menu_t id;              // Page ID
   const char *name;       // Page 名称
-  MenuItem   *child;      // 子菜单指针
-  MenuItem   *l_sibling;  // 左兄弟菜单指针
-  MenuItem   *r_sibling;  // 右兄弟菜单指针   
+  MenuItem   *child;      // 子菜单项
+  MenuItem   *l_sibling;  // 左兄弟菜单项
+  MenuItem   *r_sibling;  // 右兄弟菜单项   
   MenuCallback cb;        // 回调函数
 };
 
 struct _menu_show_conf {
   MenuPage *cur_page;     // 当前菜单页
   MenuPage *cur_item;     // 当前选中子项
-  MenuPage *head_item;    // 首显示项
-  MenuPage *tail_item;    // 尾显示项
+  MenuPage *head_item;    
+  MenuPage *tail_item;    
 };
 
 void menu_init(MenuPage *page_list, menu_t page_num);
