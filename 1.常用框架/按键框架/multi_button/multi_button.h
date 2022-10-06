@@ -50,7 +50,7 @@ enum ENUM_ButtonID {
   BUTTON_KEY4,
   // 添加自定义按钮
   
-  NUM_OF_BUTTON,
+  BUTTON_COUNT,
 };
 
 // multi_button 按键事件枚举列表
@@ -66,7 +66,7 @@ enum ENUM_ButtonEvent {
   EVENT_LONG_PRESS_START,   // 长按开始事件
   EVENT_LONG_PRESS_HOLD,    // 长按保持事件
   EVENT_LONG_PRESS_UP,      // 长按抬起事件
-  NUM_OF_EVENT,
+  EVENT_COUNT,
 };
 
 // multi_button 事件结构体

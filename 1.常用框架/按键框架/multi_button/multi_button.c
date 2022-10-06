@@ -58,7 +58,7 @@ static Button *button_list = NULL;
 // 获取按键输入的函数指针
 static uint8_t(*read_button_gpio)(uint8_t button_id) = NULL;
 // 按键初始化列表
-static ButtonInitList button_init_list[NUM_OF_BUTTON] = {
+static ButtonInitList button_init_list[BUTTON_COUNT] = {
   /* {按键ID, 最大连击次数，长按功能开关，按键动作电平, 按键回调函数指针, 按键结构体} */
   {BUTTON_KEY1, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},  
   {BUTTON_KEY2, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},
@@ -66,7 +66,7 @@ static ButtonInitList button_init_list[NUM_OF_BUTTON] = {
   {BUTTON_KEY4, REPEAT_MAX, LONGPRESS_ENABLE, ACT_LEVEL_L, NULL, {0}},
 };
 // 字符串数组：按键名称
-static char* str_button_name[NUM_OF_BUTTON] = {
+static char* str_button_name[BUTTON_COUNT] = {
   "KEY 1",
   "KEY 2",
   "KEY 3",
@@ -74,7 +74,7 @@ static char* str_button_name[NUM_OF_BUTTON] = {
   // 用户自定义按键
 };
 // 字符串数组：事件名称
-static char* str_button_event[NUM_OF_EVENT] = {
+static char* str_button_event[EVENT_COUNT] = {
   "None Press",
   "Press Down",
   "Press Up",
