@@ -11,7 +11,6 @@ enum ENUM_HardKeyID {
   HKEY_KEY2,
   HKEY_WKUP,
   HKEY_COUNT,
-  HKEY_NULL,
 };
 
 // 硬按键结构体
@@ -31,9 +30,7 @@ enum ENUM_SoftKeyType {
 // 软按键状态
 enum ENUM_SoftKeyState {
   SKEY_STATE_IDLE = 0,
-  SKEY_STATE_PRESS_DOWN,
-  SKEY_STATE_CLICK,
-  SKEY_STATE_LONG_PRESS,
+  SKEY_STATE_PRESS,
 };
 
 // 
@@ -53,6 +50,7 @@ enum ENUM_SoftKeyID {
   SKEY_COMBO2,
   SKEY_COUNT,
 };
+
 // 软按键结构体
 typedef struct {
   uint8_t skey_id   : 5;   // 按键ID [0~31]

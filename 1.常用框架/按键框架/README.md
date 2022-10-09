@@ -9,4 +9,4 @@ MultiButton : github.com/0x1abin/MultiButton
 
 ## 2.simple key
 
-精简的按键库，采用全局标志位实现按键事件的推送，有待更新。
+解耦了硬件与应用层的实现，硬件层扫描并记录按键状态，应用层处理软按键事件，支持组合按键，

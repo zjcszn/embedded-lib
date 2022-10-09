@@ -39,10 +39,10 @@ static uint8_t (*read_hkey_gpio)(uint8_t hkey_id) = NULL;
 /****************************** 软按键配置 ******************************/
 
 static SKEY_T skey_list[SKEY_COUNT] = {
-  [SKEY_KEY0]   = {SKEY_KEY0,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY0, HKEY_NULL},
-  [SKEY_KEY1]   = {SKEY_KEY1,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY1, HKEY_NULL},
-  [SKEY_KEY2]   = {SKEY_KEY2,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY2, HKEY_NULL},
-  [SKEY_WKUP]   = {SKEY_WKUP,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_WKUP, HKEY_NULL},
+  [SKEY_KEY0]   = {SKEY_KEY0,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY0, 0},
+  [SKEY_KEY1]   = {SKEY_KEY1,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY1, 0},
+  [SKEY_KEY2]   = {SKEY_KEY2,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY2, 0},
+  [SKEY_WKUP]   = {SKEY_WKUP,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_WKUP, 0},
   [SKEY_COMBO1] = {SKEY_COMBO1, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY0},
   [SKEY_COMBO2] = {SKEY_COMBO2, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY2},
 };
@@ -78,7 +78,7 @@ void update_hkey_status(void) {
  * @return uint8_t 0表示按键释放，1表示按键按下，2表示按键被打断
  */
 uint8_t get_skey_status(uint8_t id) {
-  if (id < HKEY_COUNT) {
+  if (skey_list[id].type == SKEY_TYPE_SINGLE) {
     if (hkey_status & ~(1U << skey_list[id].hkey_1)) {
       return SKEY_NONE_KEY;
     }
@@ -101,23 +101,30 @@ uint8_t get_skey_status(uint8_t id) {
   }
 }
 
+/**
+ * @brief 
+ * 
+ * @param skey_id 
+ */
 void skey_process(uint8_t skey_id) {
-
+  uint8_t skey_stat = get_skey_status(skey_id);
   switch (skey_list[skey_id].state) {
     case SKEY_STATE_IDLE:
-      if (get_skey_status(skey_id) == SKEY_PRESS_DN) {
+      if (skey_stat == SKEY_PRESS_DN) {
         // push event : press dn
-        skey_list[skey_id].state = SKEY_STATE_PRESS_DOWN;
+        skey_list[skey_id].state = SKEY_STATE_PRESS;
       }
       break;
 
-    case SKEY_STATE_PRESS_DOWN:
-      if (get_skey_status(skey_id) == SKEY_NONE_KEY) {
-        skey_list[skey_id].state = SKEY_STATE_IDLE;
+    case SKEY_STATE_PRESS:
+      if (skey_stat == SKEY_PRESS_DN) {
+        // push event :long press
       }
       else {
-        if (skey_list[skey_id].ticks < TICKS_LONG_PRESS);
+        if (skey_stat == SKEY_PRESS_UP) {
+          // push event :press up
+        }
+        skey_list[skey_id].state = SKEY_STATE_IDLE;
       }
   }
-
 }
