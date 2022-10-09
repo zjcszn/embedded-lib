@@ -11,10 +11,10 @@ typedef struct _menu_show_conf  MenuShowConf;
 typedef int (*MenuCallback)(void *);
 
 enum ENUM_MENU_KEY {
-  MENU_KEY_UP = 1,  // 上移按键
-  MENU_KEY_DOWN,    // 下移按键
-  MENU_KEY_ENTER,   // 进入按键
-  MENU_KEY_ESC,     // 退出按键
+  MENU_KEY_UP = 1,  // 上移
+  MENU_KEY_DOWN,    // 下移
+  MENU_KEY_ENTER,   // 进入菜单
+  MENU_KEY_ESC,     // 退出菜单
   /* 用户自定义 */
 };
 

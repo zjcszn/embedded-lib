@@ -1,101 +1,123 @@
 #include "simple_key.h"
 
-#define TICKS_INTERVAL    (10U)  // ticks周期：10ms
-#define TICKS_FILTER      ( 2U)  // 按键消抖采样次数
-
-#define ACT_LEVEL_L       ( 0U)  // 低电平动作
-#define ACT_LEVEL_H       ( 1U)  // 高电平动作
-
-/*************** 按键状态相关变量及辅助宏 ********************/
-
-// 按键状态全局标志
-static union {
-  struct {
-    uint8_t stat;     // 按键状态标志位，0表示按键释放，1表示按键按下
-    uint8_t event;    // 按键单击事件标志位，0表示未触发单击事件，1表示触发单击事件
-  } cond;
-  uint16_t raw;
-} key_stat = {0};
 
 
-#define CHECK_KEY_PRESS(i)    (key_stat.cond.stat  & (1U << i))
-#define CHECK_KEY_CLICK(i)    (key_stat.cond.event & (1U << i))
+#define TICKS_INTERVAL          ( 10U)  // ticks周期：10ms
+#define TICKS_FILTER            (  2U)  // 按键消抖ticks，20ms
+#define TICKS_PRESS_REPEAT      ( 20U)  // 按键连击ticks，200ms
+#define TICKS_LONG_PRESS        (100U)  // 按键长按ticks，1000ms
+#define TICKS_LONG_PRESS_HOLD   (  5U)  // 长按事件推送间隔，50ms
 
-// 按键按下
-#define KEY_PRESS(i) \
-        do {  \
-        key_stat.cond.stat |=  1U << i;  \
-        } while (0)
+#define KEY_FIFO_SIZE     (8U)
+#define KEY_FIFO_MASK     (7U)
 
-// 按键释放  
-#define KEY_RELEASE(i) \
-        do {  \
-        key_stat.cond.stat &= ~1U << i;  \
-        } while (0)
+#define HIGH_LEVEL        (1U)
+#define  LOW_LEVEL        (0U)
 
-// 单击事件
-#define KEY_CLICK(i) \
-        do {  \
-        key_stat.cond.event |=  1U << i;  \
-        } while (0)
+typedef struct {
+  uint8_t buf[KEY_FIFO_SIZE];
+  uint8_t read;
+  uint8_t write;
+} KEY_FIFO_T;
 
-// 清除事件
-#define KEY_CLR_EVENT() \
-        do {  \
-        key_stat.cond.event = 0x00;  \
-        } while (0)
+/****************************** 硬按键配置 ******************************/
 
-// 获取按键输入信号的函数
-static uint8_t(*read_key_gpio)(uint8_t key_id) = NULL;
-// 读取旧的按键状态
-#define KEY_OLD_STAT(i)   (!!CHECK_KEY_PRESS(i))
-// 读取按键输入，0表示按键释放，1表示按键按下
-#define READ_KEY(i)   (read_key_gpio(i) == key_list[i].act_level)
-
-
-// 按键列表
-static Key key_list[KEY_COUNT] = {
-  [KEY_MOD] = {0, ACT_LEVEL_L},
-  [KEY_NUM] = {0, ACT_LEVEL_L},
-  [KEY_STB] = {0, ACT_LEVEL_L},
-  [KEY_PRS] = {0, ACT_LEVEL_L},
+static HKEY_T hkey_list[HKEY_COUNT] = {
+  [HKEY_KEY0] = {HKEY_KEY0, 0,  LOW_LEVEL},
+  [HKEY_KEY1] = {HKEY_KEY1, 0,  LOW_LEVEL},
+  [HKEY_KEY2] = {HKEY_KEY2, 0,  LOW_LEVEL},
+  [HKEY_WKUP] = {HKEY_WKUP, 0, HIGH_LEVEL},
 };
 
-/*********************** 函数定义 ***********************/
+static uint32_t hkey_status = 0;
+static uint8_t (*read_hkey_gpio)(uint8_t hkey_id) = NULL;
 
-// 注册按键IO信号读取函数
-void read_key_gpio_register(uint8_t(*callback)(uint8_t key_id)) {
-  read_key_gpio = callback;
-}
+#define HKEY_MASK(i)       (1U << i)
+#define GET_HKEY_STAT(i)   ((hkey_status >> i) & 1U)
+#define IS_HKEY_PRESSED(i) (read_hkey_gpio(i) == hkey_list[i].act_level)
 
-// 按键扫描函数
-void key_scan(void) {
-  uint8_t key_new_stat;
+/****************************** 软按键配置 ******************************/
 
-  for (int i = 0; i < KEY_COUNT; i++) {
-    key_new_stat = READ_KEY(i);               // 获取按键状态
-    if (key_new_stat != KEY_OLD_STAT(i)) {    // 比较新旧状态，如有改变则进入消抖程序
-      if (++key_list[i].filter_cnt > TICKS_FILTER) {
-        if (key_new_stat){
-          KEY_PRESS(i);
-        }
-        else {
-          KEY_RELEASE(i);
-          KEY_CLICK(i);
-        }
-        key_list[i].filter_cnt = 0;
-      }
+static SKEY_T skey_list[SKEY_COUNT] = {
+  [SKEY_KEY0]   = {SKEY_KEY0,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY0, HKEY_NULL},
+  [SKEY_KEY1]   = {SKEY_KEY1,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY1, HKEY_NULL},
+  [SKEY_KEY2]   = {SKEY_KEY2,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY2, HKEY_NULL},
+  [SKEY_WKUP]   = {SKEY_WKUP,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_WKUP, HKEY_NULL},
+  [SKEY_COMBO1] = {SKEY_COMBO1, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY0},
+  [SKEY_COMBO2] = {SKEY_COMBO2, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY2},
+};
+
+static uint32_t skey_status = 0;
+
+#define SKEY_MASK(id) (1U <<)
+
+
+/**
+ * @brief 扫描按键状态，经消抖处理后更新至key_status
+ * 
+ * @param key_id 
+ */
+void update_hkey_status(void) {
+  for (int i = 0; i < HKEY_COUNT; i++) {
+    if (IS_HKEY_PRESSED(i) != GET_HKEY_STAT(i)) {
+      if (++hkey_list[i].filter_cnt >= TICKS_FILTER) {
+        hkey_status = hkey_status ^ (1U << i);
+        hkey_list[i].filter_cnt = 0;
+      }      
     }
     else {
-      key_list[i].filter_cnt = 0;
+      hkey_list[i].filter_cnt = 0;
     }
   }
 }
 
-// 按键读取函数
-uint16_t read_key(void) {
-  uint16_t ret;
-  ret = key_stat.raw;
-  KEY_CLR_EVENT();
-  return ret;
+/**
+ * @brief 获取软按键状态
+ * 
+ * @param id 
+ * @return uint8_t 0表示按键释放，1表示按键按下，2表示按键被打断
+ */
+uint8_t get_skey_status(uint8_t id) {
+  if (id < HKEY_COUNT) {
+    if (hkey_status & ~(1U << skey_list[id].hkey_1)) {
+      return SKEY_NONE_KEY;
+    }
+    else {
+      return GET_HKEY_STAT(skey_list[id].hkey_1);
+    }
+  }
+  else {
+    if (hkey_status & ~(1U << skey_list[id].hkey_1 | 1U << skey_list[id].hkey_2)) {
+      return SKEY_NONE_KEY;
+    }
+    else {
+      if (GET_HKEY_STAT(skey_list[id].hkey_1)) {
+        return GET_HKEY_STAT(skey_list[id].hkey_2);
+      }
+      else {
+        return SKEY_NONE_KEY;
+      }
+    }
+  }
+}
+
+void skey_process(uint8_t skey_id) {
+
+  switch (skey_list[skey_id].state) {
+    case SKEY_STATE_IDLE:
+      if (get_skey_status(skey_id) == SKEY_PRESS_DN) {
+        // push event : press dn
+        skey_list[skey_id].state = SKEY_STATE_PRESS_DOWN;
+      }
+      break;
+
+    case SKEY_STATE_PRESS_DOWN:
+      if (get_skey_status(skey_id) == SKEY_NONE_KEY) {
+        skey_list[skey_id].state = SKEY_STATE_IDLE;
+      }
+      else {
+        if (skey_list[skey_id].ticks < TICKS_LONG_PRESS);
+      }
+  }
+
 }
