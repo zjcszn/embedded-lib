@@ -49,7 +49,7 @@ static SKEY_T skey_list[SKEY_COUNT] = {
 
 static uint32_t skey_status = 0;
 
-#define SKEY_MASK(id) (1U <<)
+#define SKEY_MASK(id) (1U << id)
 
 
 /**
@@ -127,4 +127,12 @@ void skey_process(uint8_t skey_id) {
         skey_list[skey_id].state = SKEY_STATE_IDLE;
       }
   }
+}
+
+void put_key_event(void) {
+
+}
+
+void get_key_event(void) {
+  
 }
