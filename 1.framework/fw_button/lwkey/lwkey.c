@@ -141,6 +141,13 @@ void skey_process(uint8_t skey_id) {
   }
 }
 
+void key_scan(void) {
+  update_hkey_status();
+  for (int i = 0; i < SKEY_COUNT; i++) {
+    skey_process(i);
+  }
+}
+
 int put_key_event(uint8_t key_id, uint8_t key_event) {
   if (IS_FIFO_FULL) return -1;
   uint8_t wr = key_fifo.w & KEY_FIFO_MASK;
