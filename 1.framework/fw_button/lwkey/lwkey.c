@@ -51,12 +51,12 @@ static uint8_t (*read_hkey_gpio)(uint8_t hkey_id) = NULL;
 /****************************** SoftKey配置 ******************************/
 
 static SKEY_T skey_list[SKEY_COUNT] = {
-  [SKEY_KEY0]   = {SKEY_KEY0,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY0, 0},
-  [SKEY_KEY1]   = {SKEY_KEY1,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY1, 0},
-  [SKEY_KEY2]   = {SKEY_KEY2,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_KEY2, 0},
-  [SKEY_WKUP]   = {SKEY_WKUP,   SKEY_TYPE_SINGLE, SKEY_STATE_IDLE, HKEY_WKUP, 0},
-  [SKEY_COMBO1] = {SKEY_COMBO1, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY0},
-  [SKEY_COMBO2] = {SKEY_COMBO2, SKEY_TYPE_COMBO,  SKEY_STATE_IDLE, HKEY_WKUP, HKEY_KEY2},
+  [SKEY_KEY0]   = {SKEY_KEY0,   SKEY_TYPE_SINGLE, STATE_IDLE, HKEY_KEY0, 0},
+  [SKEY_KEY1]   = {SKEY_KEY1,   SKEY_TYPE_SINGLE, STATE_IDLE, HKEY_KEY1, 0},
+  [SKEY_KEY2]   = {SKEY_KEY2,   SKEY_TYPE_SINGLE, STATE_IDLE, HKEY_KEY2, 0},
+  [SKEY_WKUP]   = {SKEY_WKUP,   SKEY_TYPE_SINGLE, STATE_IDLE, HKEY_WKUP, 0},
+  [SKEY_COMBO1] = {SKEY_COMBO1, SKEY_TYPE_COMBO,  STATE_IDLE, HKEY_WKUP, HKEY_KEY0},
+  [SKEY_COMBO2] = {SKEY_COMBO2, SKEY_TYPE_COMBO,  STATE_IDLE, HKEY_WKUP, HKEY_KEY2},
 };
 
 static uint32_t skey_status = 0;
@@ -121,14 +121,14 @@ uint8_t get_skey_status(uint8_t id) {
 void skey_process(uint8_t skey_id) {
   uint8_t skey_stat = get_skey_status(skey_id);
   switch (skey_list[skey_id].state) {
-    case SKEY_STATE_IDLE:
+    case STATE_IDLE:
       if (skey_stat == SKEY_PRESS_DN) {
         put_key_event(skey_id, EVENT_PRESS_DOWN);
-        skey_list[skey_id].state = SKEY_STATE_PRESS;
+        skey_list[skey_id].state = STATE_PRESS_DOWN;
       }
       break;
 
-    case SKEY_STATE_PRESS:
+    case STATE_PRESS_DOWN:
       if (skey_stat == SKEY_PRESS_DN) {
         put_key_event(skey_id, EVENT_LONG_PRESS);
       }
@@ -136,7 +136,7 @@ void skey_process(uint8_t skey_id) {
         if (skey_stat == SKEY_PRESS_UP) {
           put_key_event(skey_id, EVENT_PRESS_UP);
         }
-        skey_list[skey_id].state = SKEY_STATE_IDLE;
+        skey_list[skey_id].state = STATE_IDLE;
       }
   }
 }
@@ -149,7 +149,7 @@ void key_scan(void) {
 }
 
 int put_key_event(uint8_t key_id, uint8_t key_event) {
-  if (IS_FIFO_FULL) return -1;
+  if (IS_FIFO_FULL()) return -1;
   uint8_t wr = key_fifo.w & KEY_FIFO_MASK;
   key_fifo.buf[wr].key_id    = key_id;
   key_fifo.buf[wr].key_event = key_event;
@@ -158,7 +158,7 @@ int put_key_event(uint8_t key_id, uint8_t key_event) {
 }
 
 int get_key_event(KEY_EVENT_T *buf) {
-  if (IS_FIFO_EMPTY) return -1;
+  if (IS_FIFO_EMPTY()) return -1;
   memcpy(buf, &key_fifo.buf[key_fifo.r & KEY_FIFO_MASK], sizeof(KEY_EVENT_T));
   key_fifo.r++;
   return 0;
