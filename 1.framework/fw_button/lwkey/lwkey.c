@@ -63,6 +63,7 @@ static uint32_t skey_status = 0;
 
 #define SKEY_MASK(id) (1U << id)
 
+/****************************** 代码区 ******************************/
 
 /**
  * @brief 扫描按键状态，经消抖处理后更新至key_status
