@@ -74,6 +74,11 @@ typedef struct {
   uint8_t key_event : 3;
 }KEY_EVENT_T;
 
+
+void key_scan(void);
+int get_key_event(KEY_EVENT_T *buf);
+
+
 #ifdef __cplusplus
 }
 #endif
