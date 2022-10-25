@@ -1,5 +1,5 @@
-#ifndef __LWKEY_H__
-#define __LWKEY_H__
+#ifndef __SIMPLE_BUTTON_H__
+#define __SIMPLE_BUTTON_H__
 
 #include <stdint.h>
 
@@ -7,76 +7,74 @@
 extern "C" {
 #endif
 
-/****************** Hard Key ******************/
-// HardKey ID枚举
-enum ENUM_HardKeyID {
-  HKEY_KEY0 = 0,
-  HKEY_KEY1,
-  HKEY_KEY2,
-  HKEY_WKUP,
-  HKEY_COUNT,
+/****************** Hardware ******************/
+
+// 硬件按键编号
+enum ENUM_HButtonID {
+  HBUTTON_KEY0,
+  HBUTTON_KEY1,
+  HBUTTON_KEY2,
+  HBUTTON_WKUP,
+  HBUTTON_COUNT,
+  HBUTTON_NULL,
 };
 
-// HardKey结构体
 typedef struct {
-  uint8_t hkey_id     : 4;   // 按键ID [0~15]
-  uint8_t filter_cnt  : 3;   // 消抖计数器 [0~7]
-  uint8_t act_level   : 1;   // 按键按下时的电平 [0~1]
-}HKEY_T;
+  uint8_t filter_cnt;   // 消抖计数器
+  uint8_t act_level;    // 动作电平
+}HButton_T;
 
-/****************** Soft Key ******************/
-// SoftKey ID枚举
-enum ENUM_SoftKeyID {
-  SKEY_KEY0 = 0,
-  SKEY_KEY1,
-  SKEY_KEY2,
-  SKEY_WKUP,
-  SKEY_COMBO1,
-  SKEY_COMBO2,
-  SKEY_COUNT,
+/****************** Application ******************/
+// 自定义按键编号
+enum ENUM_CustomButtonID {
+  BUTTON_KEY0,
+  BUTTON_KEY1,
+  BUTTON_KEY2,
+  BUTTON_WKUP,
+  BUTTON_COMBO1,
+  BUTTON_COMBO2,
+  BUTTON_COUNT,
 };
 
-// SoftKey结构体
+// 按键状态
+enum ENUM_ButtonStatus {
+  BUTTON_ACTION_UP   = 0,     // 按键处于释放状态
+  BUTTON_ACTION_DOWN = 1,     // 按键处于按下状态
+  BUTTON_ACTION_BRK  = 2,     // 按键被打断
+};
+
+enum ENUM_ButtonType {
+  BUTTON_TYPE_SINGLE,       // 单键类型
+  BUTTON_TYPE_COMBO,        // 组合类型
+};
+
 typedef struct {
-  uint8_t skey_id   : 5;   // 按键ID [0~31]
-  uint8_t type      : 1;   // 按键类型 [0~1]
-  uint8_t state     : 2;   // 按键状态 [0~3]
-  uint8_t hkey_1    : 4;   // 硬按键1
-  uint8_t hkey_2    : 4;   // 硬按键2
-  uint8_t ticks;
-}SKEY_T;
+  uint8_t id;       // 按键ID
+  uint8_t type;     // 按键类型
+  uint8_t state;    // FSM状态
+  uint8_t ticks;    // 计数器
+  uint8_t hbtn_1;   // 组合键1
+  uint8_t hbtn_2;   // 组合键2
+}Button_T;
 
-// SoftKey类型枚举
-enum ENUM_SoftKeyType {
-  SKEY_TYPE_SINGLE = 0,
-  SKEY_TYPE_COMBO,
-};
 
-// SoftKey触发事件枚举
-enum ENUM_SoftKeyStatus {
-  SKEY_PRESS_UP = 0,
-  SKEY_PRESS_DN = 1,
-  SKEY_NONE_KEY = 2,
-};
 
 /******************* 事件 *******************/
-// 事件枚举
-enum ENUM_KeyEvent {
-  NONE_EVENT = 0,
+
+enum ENUM_ButtonEvent {
+  EVENT_NULL,
   EVENT_PRESS_DOWN,
   EVENT_PRESS_UP,
-  EVENT_LONG_PRESS,
+  EVENT_LONG_PRESS_START,
+  EVENT_LONG_PRESS_HOLD,
+  EVENT_LONG_PRESS_UP,
 };
 
 // 事件结构体
 typedef struct {
-  uint8_t key_id    : 5;
-  uint8_t key_event : 3;
-}KEY_EVENT_T;
-
-
-void key_scan(void);
-int get_key_event(KEY_EVENT_T *buf);
+  uint8_t button_id;
+  uint8_t button_event;
+}ButtonEvent_T;
 
 
 #ifdef __cplusplus
