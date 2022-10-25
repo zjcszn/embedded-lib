@@ -2,27 +2,27 @@
 
 #include <string.h>
 
-#define TICKS_INTERVAL          ( 10U)  // ticks周期：10ms
-#define TICKS_FILTER            (  2U)  // 按键消抖ticks，20ms
-#define TICKS_PRESS_REPEAT      ( 20U)  // 按键连击ticks，200ms
-#define TICKS_LONG_PRESS        (100U)  // 按键长按ticks，1000ms
-#define TICKS_LONG_PRESS_HOLD   (  5U)  // 长按事件推送间隔，50ms
+#define TICKS_INTERVAL          ( 10U)    // ticks周期：10ms
+#define TICKS_FILTER            (  2U)    // 按键消抖ticks，20ms
+#define TICKS_PRESS_REPEAT      ( 20U)    // 按键连击ticks，200ms
+#define TICKS_LONG_PRESS        (100U)    // 按键长按ticks，1000ms
+#define TICKS_LONG_PRESS_HOLD   (  5U)    // 长按事件推送间隔，50ms
 
 #define ACT_LEVEL_L             (  0U)
 #define ACT_LEVEL_H             (  1U)
 
-#define STATE_IDLE            0
-#define STATE_PRESS_DOWN      1
-#define STATE_PRESS_BRK       2
-#define STATE_PRESS_LONG      3
+#define STATE_IDLE              (  0U)    // 空闲状态
+#define STATE_PRESS_DOWN        (  1U)    // 按下状态
+#define STATE_PRESS_BRK         (  2U)    // 打断状态
+#define STATE_PRESS_LONG        (  3U)    // 长按状态
 
 /****************************** FIFO设置 ******************************/
 
 #define EVENT_FIFO_SIZE     (16U)
-#define EVENT_FIFO_MASK     (15U)
+#define EVENT_FIFO_MASK     (EVENT_FIFO_SIZE - 1)
 
 static struct {
-  ButtonEvent_T buf[EVENT_FIFO_SIZE];       // FIFO buffer
+  ButtonEvent_T buf[EVENT_FIFO_SIZE];     // FIFO buffer
   uint8_t       r;                        // 读指针
   uint8_t       w;                        // 写指针
 } event_fifo = {0};
@@ -33,6 +33,7 @@ static struct {
 /****************************** HardKey配置 ******************************/
 
 static HButton_T hbtn_list[HBUTTON_COUNT] = {
+  // [硬件按键编号] = {消抖计数器初值， 动作电平}
   [HBUTTON_KEY0] = {0, ACT_LEVEL_L},
   [HBUTTON_KEY1] = {0, ACT_LEVEL_L},
   [HBUTTON_KEY2] = {0, ACT_LEVEL_L},
@@ -45,7 +46,7 @@ static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 #define HBTN_MASK(i)        (1U << i)
 // 读取当前的硬件按键状态
 #define HBTN_PRE_STAT(i)  ((hbtn_status >> i) & 1U)
-// 检查硬件按键是否被按下
+// 获取最新的硬件按键状态
 #define HBTN_NEW_STAT(i)  (read_hbtn_gpio(i) == hbtn_list[i].act_level)
 
 /****************************** 自定义按键列表 ******************************/
@@ -60,7 +61,15 @@ static Button_T button_list[BUTTON_COUNT] = {
   [BUTTON_COMBO2] = {BUTTON_COMBO2, BUTTON_TYPE_COMBO,  STATE_IDLE, HBUTTON_WKUP, HBUTTON_KEY2, 0},
 };
 
+
+static void hbtn_status_update(void);
+static uint8_t get_button_action(Button_T *btn);
+
 /****************************** 代码区 ******************************/
+
+void hal_button_gpio_regesiter (uint8_t(*hal_func)(uint8_t hbtn_id)) {
+  read_hbtn_gpio = hal_func;
+}
 
 /**
  * @brief 扫描按键状态，经消抖处理后更新至hbt_status
