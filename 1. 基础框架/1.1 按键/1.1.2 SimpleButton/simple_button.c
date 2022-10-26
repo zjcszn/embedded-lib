@@ -2,24 +2,24 @@
 
 #include <string.h>
 
-#define TICKS_INTERVAL          ( 10U)    // ticks周期：10ms
-#define TICKS_FILTER            (  2U)    // 按键消抖ticks，20ms
-#define TICKS_PRESS_REPEAT      ( 20U)    // 按键连击ticks，200ms
-#define TICKS_LONG_PRESS        (100U)    // 按键长按ticks，1000ms
-#define TICKS_LONG_PRESS_HOLD   (  5U)    // 长按事件推送间隔，50ms
+/******************************** 宏定义 ********************************/
 
-#define ACT_LEVEL_L             (  0U)
-#define ACT_LEVEL_H             (  1U)
+// Ticks宏定义
+#define TICKS_INTERVAL          ( 10U)    // 嘀嗒周期：10ms
+#define TICKS_FILTER            (  2U)    // 消抖采样次数
+#define TICKS_PRESS_REPEAT      ( 20U)    // 嘀嗒计数器阈值：重复按下
+#define TICKS_LONG_PRESS        (100U)    // 嘀嗒计数器阈值：长按触发
+#define TICKS_LONG_PRESS_HOLD   (  5U)    // 嘀嗒计数器阈值：长按事件推送间隔
 
-#define STATE_IDLE              (  0U)    // 空闲状态
-#define STATE_PRESS_DOWN        (  1U)    // 按下状态
-#define STATE_PRESS_BRK         (  2U)    // 打断状态
-#define STATE_PRESS_LONG        (  3U)    // 长按状态
+// 动作电平宏定义
+#define ACT_LEVEL_L             (  0U)    // 按键动作电平：低电平
+#define ACT_LEVEL_H             (  1U)    // 按键动作电平：高电平
 
-/****************************** FIFO设置 ******************************/
+/******************************* FIFO设置 *******************************/
 
-#define EVENT_FIFO_SIZE     (16U)
-#define EVENT_FIFO_MASK     (EVENT_FIFO_SIZE - 1)
+// FIFO缓冲区大小
+#define EVENT_FIFO_SIZE         (16U)
+#define EVENT_FIFO_MASK         (EVENT_FIFO_SIZE - 1)
 
 static struct {
   ButtonEvent_T buf[EVENT_FIFO_SIZE];     // FIFO buffer
@@ -27,11 +27,12 @@ static struct {
   uint8_t       w;                        // 写指针
 } event_fifo = {0};
 
-#define IS_FIFO_EMPTY()       (event_fifo.r == event_fifo.w)
-#define IS_FIFO_FULL()        (EVENT_FIFO_SIZE == (event_fifo.w - event_fifo.r))
+#define IS_FIFO_EMPTY()         (event_fifo.r == event_fifo.w)
+#define IS_FIFO_FULL()          (EVENT_FIFO_SIZE == (event_fifo.w - event_fifo.r))
 
-/****************************** HardKey配置 ******************************/
+/****************************** 硬件按键配置 ******************************/
 
+// 硬件按键列表
 static HButton_T hbtn_list[HBUTTON_COUNT] = {
   // [硬件按键编号] = {消抖计数器初值， 动作电平}
   [HBUTTON_KEY0] = {0, ACT_LEVEL_L},
@@ -40,32 +41,43 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
   [HBUTTON_WKUP] = {0, ACT_LEVEL_H},
 };
 
+// 硬件按键状态表
 static uint32_t hbtn_status = 0;
+
+// 获取硬件按键IO输入的回调函数
 static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
-#define HBTN_MASK(i)        (1U << i)
-// 读取当前的硬件按键状态
-#define HBTN_PRE_STAT(i)  ((hbtn_status >> i) & 1U)
-// 获取最新的硬件按键状态
-#define HBTN_NEW_STAT(i)  (read_hbtn_gpio(i) == hbtn_list[i].act_level)
+// 获取当前的硬件按键状态
+#define GET_HBTN_STAT(i)  ((hbtn_status >> i) & 1U)
 
-/****************************** 自定义按键列表 ******************************/
+// 检查硬件按键状态，返回0：状态未改变  返回1：状态改变
+static inline int check_hbt_stat(uint8_t hbtn_id) {
+  return (GET_HBTN_STAT(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
+}
 
+/***************************** 自定义按键配置 *****************************/
+
+// 自定义按键列表
 static Button_T button_list[BUTTON_COUNT] = {
   // [自定义按键编号] = {自定义按键编号， 按键类型， FSM初始状态， 组合键1， 组合键2， 计数器初值}
   [BUTTON_KEY0]   = {BUTTON_KEY0,   BUTTON_TYPE_SINGLE, STATE_IDLE, HBUTTON_KEY0, HBUTTON_NULL, 0},
   [BUTTON_KEY1]   = {BUTTON_KEY1,   BUTTON_TYPE_SINGLE, STATE_IDLE, HBUTTON_KEY1, HBUTTON_NULL, 0},
   [BUTTON_KEY2]   = {BUTTON_KEY2,   BUTTON_TYPE_SINGLE, STATE_IDLE, HBUTTON_KEY2, HBUTTON_NULL, 0},
   [BUTTON_WKUP]   = {BUTTON_WKUP,   BUTTON_TYPE_SINGLE, STATE_IDLE, HBUTTON_WKUP, HBUTTON_NULL, 0},
+
   [BUTTON_COMBO1] = {BUTTON_COMBO1, BUTTON_TYPE_COMBO,  STATE_IDLE, HBUTTON_WKUP, HBUTTON_KEY0, 0},
   [BUTTON_COMBO2] = {BUTTON_COMBO2, BUTTON_TYPE_COMBO,  STATE_IDLE, HBUTTON_WKUP, HBUTTON_KEY2, 0},
 };
 
 
+/****************************** 私有函数声明 ******************************/
+
+
 static void hbtn_status_update(void);
 static uint8_t get_button_action(Button_T *btn);
 
-/****************************** 代码区 ******************************/
+
+/******************************** 函数定义 ********************************/
 
 void hal_button_gpio_regesiter (uint8_t(*hal_func)(uint8_t hbtn_id)) {
   read_hbtn_gpio = hal_func;
@@ -78,7 +90,7 @@ void hal_button_gpio_regesiter (uint8_t(*hal_func)(uint8_t hbtn_id)) {
  */
 static void hbtn_status_update(void) {
   for (int i = 0; i < HBUTTON_COUNT; i++) {
-    if (HBTN_NEW_STAT(i) != HBTN_PRE_STAT(i)) {
+    if (check_hbt_stat(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
         hbtn_status = hbtn_status ^ (1U << i);
         hbtn_list[i].filter_cnt = 0;
@@ -102,7 +114,7 @@ static uint8_t get_button_action(Button_T *btn) {
       return BUTTON_ACTION_BRK;
     }
     else {
-      return HBTN_PRE_STAT(btn->hbtn_1);
+      return GET_HBTN_STAT(btn->hbtn_1);
     }
   }
   else {
@@ -110,8 +122,8 @@ static uint8_t get_button_action(Button_T *btn) {
       return BUTTON_ACTION_BRK;
     }
     else {
-      if (HBTN_PRE_STAT(btn->hbtn_1)) {
-        return HBTN_PRE_STAT(btn->hbtn_2);
+      if (GET_HBTN_STAT(btn->hbtn_1)) {
+        return GET_HBTN_STAT(btn->hbtn_2);
       }
       else {
         return BUTTON_ACTION_BRK;

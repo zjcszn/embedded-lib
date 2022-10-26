@@ -7,47 +7,61 @@
 extern "C" {
 #endif
 
-/****************** Hardware Button******************/
+/*********************** 硬件层 ***********************/
+
+// 依据设计原理图定义
 
 // 硬件按键编号
 enum ENUM_HButtonID {
-  HBUTTON_KEY0,
-  HBUTTON_KEY1,
-  HBUTTON_KEY2,
-  HBUTTON_WKUP,
+  HBUTTON_KEY0,   // KEY_0
+  HBUTTON_KEY1,   // KEY_1
+  HBUTTON_KEY2,   // KEY_2
+  HBUTTON_WKUP,   // KEY_WKUP
   HBUTTON_COUNT,  // 硬件按键数量
-  HBUTTON_NULL,
+  HBUTTON_NULL,   // NULL
 };
 
+// 硬件按键结构体
 typedef struct {
   uint8_t filter_cnt;   // 消抖计数器
   uint8_t act_level;    // 动作电平
 }HButton_T;
 
-/****************** Custom Button ******************/
-// 用户自定义按键编号
+/*********************** 应用层 ***********************/
+
+// 按键编号
 enum ENUM_ButtonID {
-  BUTTON_KEY0,
-  BUTTON_KEY1,
-  BUTTON_KEY2,
-  BUTTON_WKUP,
-  BUTTON_COMBO1,
-  BUTTON_COMBO2,
+  BUTTON_KEY0,    // KEY_0
+  BUTTON_KEY1,    // KEY_1
+  BUTTON_KEY2,    // KEY_2
+  BUTTON_WKUP,    // KEY_WKUP
+  BUTTON_COMBO1,  // 组合键 1：KEY_WKUP + KEY_0
+  BUTTON_COMBO2,  // 组合键 2：KEY_WKUP + KEY_2
   BUTTON_COUNT,   // 自定义按键数量
 };
 
-// 用户自定义按键动作状态
+// 按键动作事件
 enum ENUM_ButtonAction {
-  BUTTON_ACTION_UP   = 0,   // 按键处于释放状态
-  BUTTON_ACTION_DOWN = 1,   // 按键处于按下状态
-  BUTTON_ACTION_BRK  = 2,   // 按键被打断
+  BUTTON_ACTION_UP   = 0,   // 按键释放
+  BUTTON_ACTION_DOWN = 1,   // 按键按下
+  BUTTON_ACTION_BRK  = 2,   // 按键打断
 };
 
+// 按键类型
 enum ENUM_ButtonType {
   BUTTON_TYPE_SINGLE,       // 单键类型
   BUTTON_TYPE_COMBO,        // 组合类型
 };
 
+// 按键状态机
+enum ENUM_ButtonFsmState {
+  STATE_IDLE,             // 空闲状态
+  STATE_PRESS_DOWN,       // 按下状态
+  STATE_PRESS_BRK,        // 打断状态
+  STATE_PRESS_LONG,       // 长按状态
+};
+
+// 按键结构体
 typedef struct {
   uint8_t id;               // 按键ID
   uint8_t type;             // 按键类型
@@ -59,8 +73,9 @@ typedef struct {
 
 
 
-/******************* 事件 *******************/
+/********************** 按键事件 **********************/
 
+// 事件类型
 enum ENUM_ButtonEvent {
   EVENT_NULL,               // 空事件
   EVENT_PRESS_DOWN,         // 按键按下事件
@@ -70,10 +85,13 @@ enum ENUM_ButtonEvent {
   EVENT_LONG_PRESS_UP,      // 按键长按抬起事件
 };
 
+// 事件结构体
 typedef struct {
   uint8_t button_id;        // 按键ID
   uint8_t button_event;     // 按键事件
 }ButtonEvent_T;
+
+/********************** 函数声明 **********************/
 
 
 #ifdef __cplusplus
