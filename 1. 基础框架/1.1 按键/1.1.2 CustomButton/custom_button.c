@@ -1,19 +1,19 @@
-#include "simple_button.h"
+#include "custom_button.h"
 
 #include <string.h>
 
 /******************************** 宏定义 ********************************/
 
 // Ticks宏定义
-#define TICKS_INTERVAL          ( 10U)    // 嘀嗒周期：10ms
-#define TICKS_FILTER            (  2U)    // 消抖采样次数
-#define TICKS_PRESS_REPEAT      ( 20U)    // 嘀嗒计数器阈值：重复按下
-#define TICKS_LONG_PRESS        (100U)    // 嘀嗒计数器阈值：长按触发
-#define TICKS_LONG_PRESS_HOLD   (  5U)    // 嘀嗒计数器阈值：长按事件推送间隔
+#define TICKS_INTERVAL          ( 10U)        // 嘀嗒周期：10ms
+#define TICKS_FILTER            (  2U)        // 消抖采样次数
+#define TICKS_PRESS_REPEAT      ( 20U)        // 嘀嗒计数器阈值： 200ms(重复按下)
+#define TICKS_LONG_PRESS        (100U)        // 嘀嗒计数器阈值：1000ms(长按触发)
+#define TICKS_LONG_PRESS_HOLD   (  5U)        // 嘀嗒计数器阈值：  50ms(长按事件推送间隔)
 
 // 动作电平宏定义
-#define ACT_LEVEL_L             (  0U)    // 按键动作电平：低电平
-#define ACT_LEVEL_H             (  1U)    // 按键动作电平：高电平
+#define ACT_LEVEL_L             (  0U)        // 按键动作电平：低电平
+#define ACT_LEVEL_H             (  1U)        // 按键动作电平：高电平
 
 /******************************* FIFO设置 *******************************/
 
@@ -22,13 +22,22 @@
 #define EVENT_FIFO_MASK         (EVENT_FIFO_SIZE - 1)
 
 static struct {
-  ButtonEvent_T buf[EVENT_FIFO_SIZE];     // FIFO buffer
-  uint8_t       r;                        // 读指针
-  uint8_t       w;                        // 写指针
+  ButtonEvent_T     buf[EVENT_FIFO_SIZE];     // FIFO buffer
+  volatile uint8_t  r;                        // 读指针
+  volatile uint8_t  w;                        // 写指针
 } event_fifo = {0};
 
-#define IS_FIFO_EMPTY()         (event_fifo.r == event_fifo.w)
-#define IS_FIFO_FULL()          (EVENT_FIFO_SIZE == (event_fifo.w - event_fifo.r))
+static inline uint8_t event_fifo_used(void) {
+  return (event_fifo.w - event_fifo.r);
+}
+
+static inline int is_fifo_empty(void) {
+  return (event_fifo.w == event_fifo.r);
+}
+
+static inline int is_fifo_full(void) {
+  return (event_fifo_used() == EVENT_FIFO_SIZE);
+}
 
 /****************************** 硬件按键配置 ******************************/
 
@@ -44,13 +53,16 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
 // 硬件按键状态表
 static uint32_t hbtn_status = 0;
 
+// 状态表掩码
+#define HBTN_STATUS_MASK  ((1U << HBUTTON_COUNT) - 1)
+
 // 获取硬件按键IO输入的回调函数
 static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
 // 获取当前的硬件按键状态
 #define GET_HBTN_STAT(i)  ((hbtn_status >> i) & 1U)
 
-// 检查硬件按键状态，返回0：状态未改变  返回1：状态改变
+// 检查硬件按键状态是否有变化，返回0：状态未改变  返回1：状态改变
 static inline int check_hbt_stat(uint8_t hbtn_id) {
   return (GET_HBTN_STAT(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
 }
@@ -79,12 +91,28 @@ static uint8_t get_button_action(Button_T *btn);
 
 /******************************** 函数定义 ********************************/
 
-void hal_button_gpio_regesiter (uint8_t(*hal_func)(uint8_t hbtn_id)) {
-  read_hbtn_gpio = hal_func;
+/**
+ * @brief 硬件按键输入信号获取函数 注册
+ * 
+ * @param cb 回调函数
+ */
+void read_hbtn_gpio_regesiter (uint8_t(*cb)(uint8_t hbtn_id)) {
+  read_hbtn_gpio = cb;
 }
 
 /**
- * @brief 扫描按键状态，经消抖处理后更新至hbt_status
+ * @brief 按键处理函数
+ * 
+ */
+void button_scan(void) {
+  hbtn_status_update();
+  for (int i = 0; i < BUTTON_COUNT; i++) {
+    button_fsm_update(&button_list[i]);
+  }
+}
+
+/**
+ * @brief 扫描硬件按键状态，经消抖处理后更新至hbt_status
  * 
  * @param 
  */
@@ -100,6 +128,7 @@ static void hbtn_status_update(void) {
       hbtn_list[i].filter_cnt = 0;
     }
   }
+  hbtn_status &= HBTN_STATUS_MASK;
 }
 
 /**
@@ -109,6 +138,7 @@ static void hbtn_status_update(void) {
  * @return uint8_t 0表示按键释放，1表示按键按下，2表示按键被打断
  */
 static uint8_t get_button_action(Button_T *btn) {
+  // 单键：只有指定的按键可以动作，其他按键的动作会打断当前按键
   if (btn->type == BUTTON_TYPE_SINGLE) {
     if (hbtn_status & ~(1U << btn->hbtn_1)) {
       return BUTTON_ACTION_BRK;
@@ -117,6 +147,7 @@ static uint8_t get_button_action(Button_T *btn) {
       return GET_HBTN_STAT(btn->hbtn_1);
     }
   }
+  // 组合键：严格的先后顺序，必须先按下一个按键，才能触发组合按键
   else {
     if (hbtn_status & ~((1U << btn->hbtn_1) | (1U << btn->hbtn_2))) {
       return BUTTON_ACTION_BRK;
@@ -132,13 +163,17 @@ static uint8_t get_button_action(Button_T *btn) {
   }
 }
 
-
+/**
+ * @brief 自定义按键 状态机处理程序，更新按键状态并推送按键事件
+ * 
+ * @param btn 按键结构体
+ */
 void button_fsm_update(Button_T *btn) {
   uint8_t btn_action = get_button_action(btn);
   switch (btn->state) {
     case STATE_IDLE:
       if (btn_action == BUTTON_ACTION_DOWN) {
-        put_key_event(btn->id, EVENT_PRESS_DOWN);
+        put_button_event(btn->id, EVENT_PRESS_DOWN);
         btn->ticks = 0;
         btn->state = STATE_PRESS_DOWN;
       }
@@ -150,13 +185,13 @@ void button_fsm_update(Button_T *btn) {
       }
       else if (btn_action == BUTTON_ACTION_DOWN) {
 				if (++btn->ticks >= TICKS_LONG_PRESS) {
-					put_key_event(btn->id, EVENT_LONG_PRESS_START);
+					put_button_event(btn->id, EVENT_LONG_PRESS_START);
           btn->ticks = 0;
           btn->state = STATE_PRESS_LONG;
 				}
       }
       else {
-        put_key_event(btn->id, EVENT_PRESS_UP);
+        put_button_event(btn->id, EVENT_PRESS_UP);
         btn->state = STATE_IDLE;
       }
       break;
@@ -167,13 +202,13 @@ void button_fsm_update(Button_T *btn) {
 			}
       else if (btn_action == BUTTON_ACTION_DOWN)
       {
-        if (++btn->ticks == TICKS_LONG_PRESS_HOLD) {
-          put_key_event(btn->id, EVENT_LONG_PRESS_HOLD);
+        if (++btn->ticks >= TICKS_LONG_PRESS_HOLD) {
+          put_button_event(btn->id, EVENT_LONG_PRESS_HOLD);
           btn->ticks = 0;
         }
       }
       else {
-        put_key_event(btn->id, EVENT_LONG_PRESS_UP);
+        put_button_event(btn->id, EVENT_LONG_PRESS_UP);
         btn->state = STATE_IDLE;
       }
       break;
@@ -186,15 +221,8 @@ void button_fsm_update(Button_T *btn) {
   }
 }
 
-void button_scan(void) {
-  hbtn_status_update();
-  for (int i = 0; i < BUTTON_COUNT; i++) {
-    button_fsm_update(&button_list[i]);
-  }
-}
-
-int put_key_event(uint8_t btn_id, uint8_t btn_event) {
-  if (IS_FIFO_FULL()) return -1;
+int put_button_event(uint8_t btn_id, uint8_t btn_event) {
+  if (is_fifo_full()) return -1;
   uint8_t wr = event_fifo.w & EVENT_FIFO_MASK;
   event_fifo.buf[wr].button_id    = btn_id;
   event_fifo.buf[wr].button_event = btn_event;
@@ -202,8 +230,8 @@ int put_key_event(uint8_t btn_id, uint8_t btn_event) {
   return 0;
 }
 
-int get_key_event(ButtonEvent_T *buf) {
-  if (IS_FIFO_EMPTY()) return -1;
+int get_button_event(ButtonEvent_T *buf) {
+  if (is_fifo_empty()) return -1;
   memcpy(buf, &event_fifo.buf[event_fifo.r & EVENT_FIFO_MASK], sizeof(ButtonEvent_T));
   event_fifo.r++;
   return 0;

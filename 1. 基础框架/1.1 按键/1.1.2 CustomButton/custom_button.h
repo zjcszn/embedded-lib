@@ -1,5 +1,5 @@
-#ifndef __SIMPLE_BUTTON_H__
-#define __SIMPLE_BUTTON_H__
+#ifndef __CUSTOM_BUTTON_H__
+#define __CUSTOM_BUTTON_H__
 
 #include <stdint.h>
 
@@ -13,31 +13,31 @@ extern "C" {
 
 // 硬件按键编号
 enum ENUM_HButtonID {
-  HBUTTON_KEY0,   // KEY_0
-  HBUTTON_KEY1,   // KEY_1
-  HBUTTON_KEY2,   // KEY_2
-  HBUTTON_WKUP,   // KEY_WKUP
-  HBUTTON_COUNT,  // 硬件按键数量
-  HBUTTON_NULL,   // NULL
+  HBUTTON_KEY0,             // KEY_0
+  HBUTTON_KEY1,             // KEY_1
+  HBUTTON_KEY2,             // KEY_2
+  HBUTTON_WKUP,             // KEY_WKUP
+  HBUTTON_COUNT,            // 硬件按键数量
+  HBUTTON_NULL,             // 
 };
 
 // 硬件按键结构体
 typedef struct {
-  uint8_t filter_cnt;   // 消抖计数器
-  uint8_t act_level;    // 动作电平
+  uint8_t filter_cnt;       // 消抖计数器
+  uint8_t act_level;        // 动作电平
 }HButton_T;
 
 /*********************** 应用层 ***********************/
 
 // 按键编号
 enum ENUM_ButtonID {
-  BUTTON_KEY0,    // KEY_0
-  BUTTON_KEY1,    // KEY_1
-  BUTTON_KEY2,    // KEY_2
-  BUTTON_WKUP,    // KEY_WKUP
-  BUTTON_COMBO1,  // 组合键 1：KEY_WKUP + KEY_0
-  BUTTON_COMBO2,  // 组合键 2：KEY_WKUP + KEY_2
-  BUTTON_COUNT,   // 自定义按键数量
+  BUTTON_KEY0,              // KEY_0
+  BUTTON_KEY1,              // KEY_1
+  BUTTON_KEY2,              // KEY_2
+  BUTTON_WKUP,              // KEY_WKUP
+  BUTTON_COMBO1,            // 组合键 1：KEY_WKUP + KEY_0
+  BUTTON_COMBO2,            // 组合键 2：KEY_WKUP + KEY_2
+  BUTTON_COUNT,             // 自定义按键数量
 };
 
 // 按键动作事件
@@ -55,10 +55,10 @@ enum ENUM_ButtonType {
 
 // 按键状态机
 enum ENUM_ButtonFsmState {
-  STATE_IDLE,             // 空闲状态
-  STATE_PRESS_DOWN,       // 按下状态
-  STATE_PRESS_BRK,        // 打断状态
-  STATE_PRESS_LONG,       // 长按状态
+  STATE_IDLE,               // 空闲状态
+  STATE_PRESS_DOWN,         // 按下状态
+  STATE_PRESS_BRK,          // 打断状态
+  STATE_PRESS_LONG,         // 长按状态
 };
 
 // 按键结构体
@@ -93,6 +93,9 @@ typedef struct {
 
 /********************** 函数声明 **********************/
 
+void read_hbtn_gpio_regesiter (uint8_t(*cb)(uint8_t hbtn_id));
+void button_scan(void);
+int get_button_event(ButtonEvent_T *buf);
 
 #ifdef __cplusplus
 }
