@@ -21,20 +21,24 @@
 #define EVENT_FIFO_SIZE         (16U)
 #define EVENT_FIFO_MASK         (EVENT_FIFO_SIZE - 1)
 
+// 事件循环队列结构体
 static struct {
   ButtonEvent_T     buf[EVENT_FIFO_SIZE];     // FIFO buffer
   volatile uint8_t  r;                        // 读指针
   volatile uint8_t  w;                        // 写指针
 } event_fifo = {0};
 
+// 检查队列已存储的事件数量
 static inline uint8_t event_fifo_used(void) {
   return (event_fifo.w - event_fifo.r);
 }
 
+// 检查队列是否为空，空返回1，非空返回0
 static inline int is_fifo_empty(void) {
   return (event_fifo.w == event_fifo.r);
 }
 
+// 检查队列是否已满，满返回1，不满返回0
 static inline int is_fifo_full(void) {
   return (event_fifo_used() == EVENT_FIFO_SIZE);
 }
@@ -50,11 +54,13 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
   [HBUTTON_WKUP] = {0, ACT_LEVEL_H},
 };
 
-// 硬件按键状态表
+// 硬件按键状态表：存储按键消抖处理的状态
 static uint32_t hbtn_status = 0;
 
-// 状态表掩码
-#define HBTN_STATUS_MASK  ((1U << HBUTTON_COUNT) - 1)
+// 硬件按键状态掩码
+#define HBTN_MASK(i)      (1U << (i))
+// 硬件按键状态表掩码
+#define HBTN_STATUS_MASK  ((HBTN_MASK(HBUTTON_COUNT - 1)) | ((HBTN_MASK(HBUTTON_COUNT)) - 1))
 
 // 获取硬件按键IO输入的回调函数
 static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
@@ -62,7 +68,7 @@ static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 // 获取当前的硬件按键状态
 #define GET_HBTN_STAT(i)  ((hbtn_status >> i) & 1U)
 
-// 检查硬件按键状态是否有变化，返回0：状态未改变  返回1：状态改变
+// 检查硬件按键状态是否发生变化，返回0：状态未改变  返回1：状态改变
 static inline int check_hbt_stat(uint8_t hbtn_id) {
   return (GET_HBTN_STAT(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
 }
@@ -101,7 +107,7 @@ void read_hbtn_gpio_regesiter (uint8_t(*cb)(uint8_t hbtn_id)) {
 }
 
 /**
- * @brief 按键处理函数
+ * @brief 按键扫描处理函数，定时器或主循环中执行
  * 
  */
 void button_scan(void) {
@@ -120,7 +126,8 @@ static void hbtn_status_update(void) {
   for (int i = 0; i < HBUTTON_COUNT; i++) {
     if (check_hbt_stat(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
-        hbtn_status = hbtn_status ^ (1U << i);
+        // 按键状态翻转
+        hbtn_status ^= HBTN_MASK(i);
         hbtn_list[i].filter_cnt = 0;
       }      
     }
@@ -128,6 +135,7 @@ static void hbtn_status_update(void) {
       hbtn_list[i].filter_cnt = 0;
     }
   }
+  // 非有效按键位置0
   hbtn_status &= HBTN_STATUS_MASK;
 }
 
@@ -140,7 +148,7 @@ static void hbtn_status_update(void) {
 static uint8_t get_button_action(Button_T *btn) {
   // 单键：只有指定的按键可以动作，其他按键的动作会打断当前按键
   if (btn->type == BUTTON_TYPE_SINGLE) {
-    if (hbtn_status & ~(1U << btn->hbtn_1)) {
+    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1))) {
       return BUTTON_ACTION_BRK;
     }
     else {
@@ -149,7 +157,7 @@ static uint8_t get_button_action(Button_T *btn) {
   }
   // 组合键：严格的先后顺序，必须先按下一个按键，才能触发组合按键
   else {
-    if (hbtn_status & ~((1U << btn->hbtn_1) | (1U << btn->hbtn_2))) {
+    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1) | HBTN_MASK(btn->hbtn_2))) {
       return BUTTON_ACTION_BRK;
     }
     else {
@@ -217,6 +225,10 @@ void button_fsm_update(Button_T *btn) {
       if (btn_action == BUTTON_ACTION_UP) {
         btn->state = STATE_IDLE;
       }
+      break;
+    
+    default:
+      btn->state = STATE_IDLE;
       break;
   }
 }

@@ -66,9 +66,9 @@ typedef struct {
   uint8_t id;               // 按键ID
   uint8_t type;             // 按键类型
   uint8_t state;            // FSM状态
-  uint8_t ticks;            // 计数器
   uint8_t hbtn_1;           // 组合键1
   uint8_t hbtn_2;           // 组合键2
+  uint8_t ticks;            // 计数器
 }Button_T;
 
 
