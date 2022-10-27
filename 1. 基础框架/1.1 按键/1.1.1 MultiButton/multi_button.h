@@ -31,8 +31,8 @@ extern "C" {
 
 #define USE_BUTTON_EVENT_FIFO     // 使用FIFO推送按键事件
 
-#define LONGPRESS_ENABLE    (1U)  // 打开长按功能
-#define LONGPRESS_DISABLE   (0U)  // 禁止长按功能
+#define LONGPRESS_ENABLE    (1U)  // 允许长按
+#define LONGPRESS_DISABLE   (0U)  // 禁止长按
 #define REPEAT_MAX          (1U)  // 最大重复按下次数 0:单击 1:双击 2：三击...
 #define ACT_LEVEL_L         (0U)  // 按钮动作电平：低电平
 #define ACT_LEVEL_H         (1U)  // 按钮动作电平：高电平
@@ -79,16 +79,16 @@ typedef void (*ButtonCallback)(const void*);
 
 // multi_button 按键结构体
 typedef struct _button {
-  uint8_t   id;             // 按键ID
-  uint8_t   ticks_cnt;      // 嘀嗒计数器 [0~255]
-  uint8_t   filter_cnt : 3; // 消抖计数器 [0~7]
-  uint8_t   repeat_cnt : 2; // 连击计数器 [0~3]
-  uint8_t   repeat_max : 2; // 最大连击次数 [0~3]
-  uint8_t   long_press : 1; // 长按功能允许位
-  uint8_t   cur_level : 1;  // 按键输入信号 [0~1]
-  uint8_t   act_level : 1;  // 按键动作电平 [0~1]
-  uint8_t   event : 4;      // 按键事件 [0~15]
-  uint8_t   state : 2;      // 按键状态 [0~3]
+  uint8_t id;               // 按键ID
+  uint8_t event;            // 按键事件
+  uint8_t ticks;            // 嘀嗒计数器
+  uint8_t filter_cnt : 4;   // 消抖计数器[0~15]
+  uint8_t repeat_cnt : 2;   // 连按计数器[0~3]
+  uint8_t repeat_max : 2;   // 最大连按次数[0~3]
+  uint8_t long_press : 1;   // 长按允许位
+  uint8_t cur_level  : 2;   // 按键当前电平[0~3]
+  uint8_t act_level  : 2;   // 按键动作电平[0~3]
+  uint8_t state      : 3;   // 按键状态[0~7]
   ButtonCallback  callback; // 按键回调函数
   struct _button  *next;    // NEXT指针
 } Button;
@@ -97,8 +97,8 @@ typedef struct _button {
 typedef struct _button_init_list {
   /* 初始化字段 */
   uint8_t init_button_id;   // 按键ID
-  uint8_t init_repeat_max;  // 最大连击次数
-  uint8_t init_long_press;  // 长按功能允许位
+  uint8_t init_repeat_max;  // 最大连按次数
+  uint8_t init_long_press;  // 长按允许位
   uint8_t init_act_level;   // 按键动作电平
   ButtonCallback init_cb;   // 按键回调函数
   /* 按键结构体 */

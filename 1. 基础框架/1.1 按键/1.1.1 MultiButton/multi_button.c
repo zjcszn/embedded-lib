@@ -36,16 +36,11 @@
 #define EVENT_FIFO_SIZE  (16U)   // SIZE 必须是2的N次幂
 #define EVENT_FIFO_MASK  (15U)   // MASK = SIZE - 1 
 
-static ButtonEvent events_buffer[EVENT_FIFO_SIZE];
 static struct {
-  ButtonEvent *buffer;
-  uint8_t     in;
-  uint8_t     out;
-}events_fifo = {
-  .buffer = events_buffer,
-  .in     = 0,
-  .out    = 0,
-};
+  ButtonEvent       buffer[EVENT_FIFO_SIZE];
+  volatile uint8_t  in;
+  volatile uint8_t  out;
+}events_fifo = {0};
 
 static int events_fifo_put(Button *button);
 static int events_fifo_get(ButtonEvent *button_event);
@@ -53,7 +48,7 @@ static int events_fifo_get(ButtonEvent *button_event);
 #endif
 
 /*********************** 按键配置 ***********************/
-// 按键单链表 表头
+// 按键链表
 static Button *button_list = NULL;
 // 获取按键输入的函数指针
 static uint8_t(*read_button_gpio)(uint8_t button_id) = NULL;
@@ -264,7 +259,7 @@ static void button_state_update(Button *button) {
   assert(button);
 
   uint8_t read_gpio_level = read_button_gpio(button->id);
-  if (button->state > 0) button->ticks_cnt++;
+  if (button->state > 0) button->ticks++;
 
   // 按键消抖处理程序
 	if (read_gpio_level != button->cur_level) { 
@@ -281,7 +276,7 @@ static void button_state_update(Button *button) {
   switch (button->state) {
     case STATE_IDLE:
       if (button->cur_level == button->act_level) {
-        button->ticks_cnt = 0;
+        button->ticks = 0;
         button->repeat_cnt = 0;
         #if ENABLE_EVENT_PRESS_DN == 1
         SET_EVENT_AND_CALL_CB(EVENT_PRESS_DN);
@@ -294,9 +289,9 @@ static void button_state_update(Button *button) {
       break;
     
     case STATE_PRESS_DOWN:
-      if (!button->long_press || button->ticks_cnt < TICKS_LONG_PRESS) {
+      if (!button->long_press || button->ticks < TICKS_LONG_PRESS) {
         if (button->cur_level != button->act_level) {
-          button->ticks_cnt = 0;
+          button->ticks = 0;
           #if ENABLE_EVENT_PRESS_UP == 1
           SET_EVENT_AND_CALL_CB(EVENT_PRESS_UP);
           #endif
@@ -307,20 +302,20 @@ static void button_state_update(Button *button) {
         #if ENABLE_EVENT_LONG_PRESS_START == 1
         SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_START);
         #endif
-        button->ticks_cnt = 0;
+        button->ticks = 0;
         button->state = (uint8_t)STATE_LONG_PRESS;
       }
       break;
 
     case STATE_CLICK:
-      if (button->repeat_cnt == button->repeat_max || button->ticks_cnt >= TICKS_PRESS_REPEAT) {
+      if (button->repeat_cnt == button->repeat_max || button->ticks >= TICKS_PRESS_REPEAT) {
         #if ENABLE_EVENT_CLICK == 1
         SET_EVENT_AND_CALL_CB(EVENT_SINGLE_CLICK + button->repeat_cnt);
         #endif
         button->state = (uint8_t)STATE_IDLE;
       }
       else if (button->cur_level == button->act_level) {
-        button->ticks_cnt = 0;
+        button->ticks = 0;
         button->repeat_cnt++;
         #if ENABLE_EVENT_PRESS_REPEAT == 1
         SET_EVENT_AND_CALL_CB(EVENT_PRESS_REPEAT);
@@ -332,9 +327,9 @@ static void button_state_update(Button *button) {
     case STATE_LONG_PRESS:
       if (button->cur_level == button->act_level) {
         #if ENABLE_EVENT_LONG_PRESS_HOLD == 1
-        if (button->ticks_cnt >= TICKS_LONG_PRESS_HOLD) {
+        if (button->ticks >= TICKS_LONG_PRESS_HOLD) {
           SET_EVENT_AND_CALL_CB(EVENT_LONG_PRESS_HOLD);
-          button->ticks_cnt = 0;
+          button->ticks = 0;
         }
         #endif
       }

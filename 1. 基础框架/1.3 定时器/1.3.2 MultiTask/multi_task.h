@@ -3,14 +3,22 @@
 
 #include <stdint.h>
 
-typedef uint32_t task_t;
+#ifdef __cplusplus  
+extern "C" {  
+#endif
 
-typedef struct task {
-  void (*p_task)(void);
-  task_t  ticks_cnt;
-  task_t  ticks_init;
-  task_t  state;
-}
 
+typedef struct _task {
+  uint8_t  task_id;
+  uint8_t  delay; 
+  uint8_t  period;
+  uint8_t  flag;
+}Task_T;
+
+
+
+#ifdef __cplusplus  
+}  
+#endif
 
 #endif
