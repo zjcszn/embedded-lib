@@ -54,7 +54,7 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
   [HBUTTON_WKUP] = {0, ACT_LEVEL_H},
 };
 
-// 硬件按键状态表：存储按键消抖处理的状态
+// 硬件按键状态表：存储按键消抖处理后的状态
 static uint32_t hbtn_status = 0;
 
 // 硬件按键状态掩码
