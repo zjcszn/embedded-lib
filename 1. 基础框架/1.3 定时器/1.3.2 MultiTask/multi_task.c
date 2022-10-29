@@ -14,13 +14,13 @@ static task_t   task_heap[TASK_MAX_NUM] = {0};
 static task_t*  task_list = NULL;
 
 // 任务Ticks
-static uint64_t task_ticks = 0;
+static volatile uint64_t task_ticks = 0;
 
 /********************* 私有函数声明 *********************/
 
-static void task_insert(task_t *new_task);
-task_t* task_malloc(void);
-void task_free(task_t *task);
+static void    task_insert(task_t *new_task);
+static task_t* task_malloc(void);
+static void    task_free(task_t *task);
 
 /*********************** 函数定义 **********************/
 
