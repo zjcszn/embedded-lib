@@ -7,15 +7,26 @@
 extern "C" {  
 #endif
 
+// 任务入口函数 指针类型
+typedef void (*entry_t)(void *args);
+// 任务结构体类型
+typedef struct _task task_t;
 
-typedef struct _task {
-  uint8_t  task_id;
-  uint8_t  delay; 
-  uint8_t  period;
-  uint8_t  flag;
-}Task_T;
+struct _task {
+  entry_t   entry;      // 任务入口函数
+  void*     args;       // 任务参数
+  uint16_t  delay;      // 延迟时间
+  uint16_t  period;     // 间隔周期
+  task_t*   next;       // next指针    
+  uint64_t  timer;      // 超时定时器  
+};
 
+/********************* 函数声明 *********************/
 
+void task_ticks_update(void);
+int  task_add(void(*entry)(void *args), void *args, uint16_t delay, uint16_t period);
+int  task_del(void(*entry)(void *args));
+void task_poll(void);
 
 #ifdef __cplusplus  
 }  
