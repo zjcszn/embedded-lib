@@ -3,18 +3,20 @@
 
 /************************ 宏定义 ***********************/
 
+#define __IO volatile
+
 #define TASK_MAX_NUM    (10U)   // 最大任务数量
 
 /********************* 静态全局变量 *********************/
 
 // 任务堆空间
-static task_t   task_heap[TASK_MAX_NUM] = {0};
+static task_t  task_heap[TASK_MAX_NUM] = {0};
 
 // 任务调度队列
-static task_t*  task_list = NULL;
+static task_t* task_list = NULL;
 
 // 任务Ticks
-static volatile uint64_t task_ticks = 0;
+static __IO uint64_t task_ticks = 0;
 
 /********************* 私有函数声明 *********************/
 
