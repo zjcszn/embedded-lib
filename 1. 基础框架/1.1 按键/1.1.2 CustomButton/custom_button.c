@@ -55,7 +55,7 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
 };
 
 // 硬件按键状态表：存储按键消抖处理后的状态
-static uint32_t hbtn_status = 0;
+static volatile uint32_t hbtn_status = 0;
 
 // 硬件按键状态掩码
 #define HBTN_MASK(i)      (1U << (i))
