@@ -28,6 +28,8 @@ struct _task {
 void task_ticks_update(void);
 int  task_add(void(*entry)(void *args), void *args, uint16_t delay, uint16_t period);
 int  task_del(void(*entry)(void *args));
+task_t* task_find(void(*entry)(void *args));
+void task_period_update(task_t *task, uint16_t period);
 void task_poll(void);
 
 #ifdef __cplusplus  

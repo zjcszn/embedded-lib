@@ -95,6 +95,32 @@ int task_del(void(*entry)(void *args)) {
 }
 
 /**
+ * @brief 在任务调度队列中查找指定任务
+ * 
+ * @param entry 
+ * @return task_t* 任务空间首地址
+ */
+task_t* task_find(void(*entry)(void *args)) {
+  task_t** target = &task_list;
+  for (; *target; target = &(*target)->next) {
+    if ((*target)->entry == entry) {
+      return *target;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * @brief 更新任务循环周期
+ * 
+ * @param task 
+ * @param period 
+ */
+void task_period_update(task_t *task, uint16_t period) {
+  task->period = period;
+}
+
+/**
  * @brief 任务调度处理程序
  * 
  */
