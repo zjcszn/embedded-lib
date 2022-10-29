@@ -7,7 +7,9 @@
 extern "C" {  
 #endif
 
-// 任务入口函数 指针类型
+/********************* 类型声明 *********************/
+
+// 任务入口函数指针
 typedef void (*entry_t)(void *args);
 // 任务结构体类型
 typedef struct _task task_t;
@@ -18,7 +20,7 @@ struct _task {
   uint16_t  delay;      // 延迟时间
   uint16_t  period;     // 间隔周期
   task_t*   next;       // next指针    
-  uint64_t  timer;      // 超时定时器  
+  uint64_t  timeout;    // 超时时间  
 };
 
 /********************* 函数声明 *********************/
