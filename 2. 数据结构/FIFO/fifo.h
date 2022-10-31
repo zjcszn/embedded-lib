@@ -71,7 +71,7 @@ static inline int fifo_is_full(FIFO_TypeDef *fifo) {
   return (fifo->size == (fifo->in - fifo->out));
 }
 
-int    fifo_init(FIFO_TypeDef *fifo, const uint8_t *buffer_addr, fifo_t  buffer_size);
+int    fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t  buffer_size);
 int    fifo_alloc(FIFO_TypeDef *fifo, fifo_t  buffer_size);
 fifo_t fifo_in(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t  len);
 fifo_t fifo_out(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len);

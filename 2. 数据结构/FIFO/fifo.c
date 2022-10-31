@@ -65,7 +65,7 @@ static fifo_t round_fifo_size(fifo_t size, int mode) {
  * @param buffer_size 
  * @return int 
  */
-int fifo_init(FIFO_TypeDef *fifo, const uint8_t *buffer_addr, fifo_t buffer_size) {
+int fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t buffer_size) {
   assert_fifo(fifo);
   if (check_fifo_size(buffer_size)) {
     buffer_size = round_fifo_size(buffer_size, ROUND_DN);
