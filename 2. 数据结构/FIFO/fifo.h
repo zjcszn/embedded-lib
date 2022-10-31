@@ -73,12 +73,12 @@ static inline int fifo_is_full(FIFO_TypeDef *fifo) {
 
 int    fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t  buffer_size);
 int    fifo_alloc(FIFO_TypeDef *fifo, fifo_t  buffer_size);
-fifo_t fifo_in(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t  len);
-fifo_t fifo_out(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len);
-fifo_t fifo_out_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len);
-fifo_t fifo_inc(FIFO_TypeDef *fifo, uint8_t c);
-fifo_t fifo_outc(FIFO_TypeDef *fifo, uint8_t *c);
-fifo_t fifo_outc_peek(FIFO_TypeDef *fifo, uint8_t *c);
+fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t  len);
+fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len);
+fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len);
+fifo_t fifo_write_byte(FIFO_TypeDef *fifo, uint8_t c);
+fifo_t fifo_read_byte(FIFO_TypeDef *fifo, uint8_t *c);
+fifo_t fifo_read_byte_peek(FIFO_TypeDef *fifo, uint8_t *c);
 
 #ifdef __cplusplus
 }

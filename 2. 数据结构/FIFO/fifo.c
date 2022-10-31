@@ -111,7 +111,7 @@ int fifo_alloc(FIFO_TypeDef *fifo, fifo_t buffer_size) {
  * @param len 
  * @return fifo_t 
  */
-fifo_t fifo_in(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
+fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
   assert_fifo(fifo);
   if (fifo_is_full(fifo)) return 0;
 
@@ -135,7 +135,7 @@ fifo_t fifo_in(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
  * @param len 
  * @return fifo_t 
  */
-fifo_t fifo_out(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
+fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
@@ -159,7 +159,7 @@ fifo_t fifo_out(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
  * @param len 
  * @return fifo_t 
  */
-fifo_t fifo_out_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
+fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
@@ -180,7 +180,7 @@ fifo_t fifo_out_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
  * @param c 
  * @return fifo_t 
  */
-fifo_t fifo_inc(FIFO_TypeDef *fifo, uint8_t c) {
+fifo_t fifo_write_byte(FIFO_TypeDef *fifo, uint8_t c) {
   assert_fifo(fifo);
   if (fifo_is_full(fifo)) return 0;
 
@@ -198,7 +198,7 @@ fifo_t fifo_inc(FIFO_TypeDef *fifo, uint8_t c) {
  * @param c 
  * @return fifo_t 
  */
-fifo_t fifo_outc(FIFO_TypeDef *fifo, uint8_t *c) {
+fifo_t fifo_read_byte(FIFO_TypeDef *fifo, uint8_t *c) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
@@ -216,7 +216,7 @@ fifo_t fifo_outc(FIFO_TypeDef *fifo, uint8_t *c) {
  * @param c 
  * @return fifo_t 
  */
-fifo_t fifo_outc_peek(FIFO_TypeDef *fifo, uint8_t *c) {
+fifo_t fifo_read_byte_peek(FIFO_TypeDef *fifo, uint8_t *c) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
