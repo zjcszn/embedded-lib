@@ -18,8 +18,10 @@
 extern "C" {
 #endif
 
+#define USE_FIFO_LOCK         0      // 使用互斥锁
 #define USE_FIFO_BARRIER      0      // 使用内存屏障
 #define USE_FIFO_ASSERT       0      // 使用assert宏
+
 
 #ifndef __IO
 #define __IO volatile
