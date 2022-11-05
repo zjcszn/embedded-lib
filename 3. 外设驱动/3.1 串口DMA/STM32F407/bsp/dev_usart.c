@@ -163,7 +163,7 @@ static uint16_t usart_dmarx_remain_size(uint8_t usart_id) {
  * @param usart_id 串口设备号
  */
 void usart_dmatx_tc_isr(uint8_t usart_id) {
-  s_usart_dev[usart_id].status = 0;
+  s_usart_dev[usart_id].status = USART_DMA_IDLE;
 }
 
 /**

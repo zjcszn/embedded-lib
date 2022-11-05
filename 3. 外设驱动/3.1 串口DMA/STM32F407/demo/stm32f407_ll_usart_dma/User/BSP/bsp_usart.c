@@ -25,7 +25,7 @@ void bsp_usart1_init(uint8_t *dmarx_buf_addr, uint32_t dmarx_buf_size) {
 
   LL_USART_EnableDMAReq_RX(USART1);         // 使能串口RX DMA传输
   LL_USART_EnableDMAReq_TX(USART1);         // 使能串口TX DMA传输
-  //LL_USART_EnableIT_IDLE(USART1);           // 使能串口空闲中断
+  LL_USART_EnableIT_IDLE(USART1);           // 使能串口空闲中断
   LL_USART_Enable(USART1);                  // 使能串口
 }
 
