@@ -54,19 +54,21 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
   [HBUTTON_WKUP] = {0, ACT_LEVEL_H},
 };
 
-// 硬件按键状态表：存储按键消抖处理后的状态
-static volatile uint32_t hbtn_status = 0;
+typedef uint32_t hbtn_status_t;   // 硬件按键数量必须小于hbtn_status_t位数
+
+// 硬件按键状态表：按键消抖后的状态值存入此表，供应用层处理
+static volatile hbtn_status_t hbtn_status = 0;
 
 // 硬件按键状态掩码
 #define HBTN_MASK(i)      (1U << (i))
-// 硬件按键状态表掩码
-#define HBTN_STATUS_MASK  ((HBTN_MASK(HBUTTON_COUNT - 1)) | ((HBTN_MASK(HBUTTON_COUNT)) - 1))
+// hbtn_status 状态表掩码
+#define HBTN_STATUS_MASK  ((~((hbtn_status_t)0U)) >> ((sizeof(hbtn_status_t) << 3) - HBUTTON_COUNT))
 
 // 获取硬件按键IO输入的回调函数
 static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
 // 获取当前的硬件按键状态
-#define GET_HBTN_STAT(i)  ((hbtn_status >> i) & 1U)
+#define GET_HBTN_STAT(i)  ((hbtn_status >> (i)) & 1U)
 
 // 检查硬件按键状态是否发生变化，返回0：状态未改变  返回1：状态改变
 static inline int check_hbt_stat(uint8_t hbtn_id) {
