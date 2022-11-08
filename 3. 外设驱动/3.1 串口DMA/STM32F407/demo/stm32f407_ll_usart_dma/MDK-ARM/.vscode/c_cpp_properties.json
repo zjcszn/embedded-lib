@@ -3,19 +3,19 @@
         {
             "name": "FLASH",
             "includePath": [
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\User\\Library",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\User\\BSP",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Core\\Inc",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Drivers\\STM32F4xx_HAL_Driver\\Inc",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Drivers\\CMSIS\\Device\\ST\\STM32F4xx\\Include",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Drivers\\CMSIS\\Include",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\User\\Library",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\User\\BSP",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Core\\Inc",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Drivers\\STM32F4xx_HAL_Driver\\Inc",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Drivers\\CMSIS\\Device\\ST\\STM32F4xx\\Include",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Drivers\\CMSIS\\Include",
                 "D:\\ProgramFiles\\KEIL\\ARM\\ARMCLANG\\include",
                 "D:\\ProgramFiles\\KEIL\\ARM\\ARMCLANG\\include\\arm_linux",
                 "D:\\ProgramFiles\\KEIL\\ARM\\ARMCLANG\\include\\arm_linux_compat",
                 "D:\\ProgramFiles\\KEIL\\ARM\\ARMCLANG\\include\\libcxx",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Core\\Src",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\MDK-ARM",
-                "f:\\OwnProject\\CubeMX\\stm32f407_ll_usart_dma\\Drivers\\STM32F4xx_HAL_Driver\\Src"
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Core\\Src",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\MDK-ARM",
+                "f:\\GithubRepo\\embedded_fw\\3. 外设驱动\\3.1 串口DMA\\STM32F407\\Demo\\stm32f407_ll_usart_dma\\Drivers\\STM32F4xx_HAL_Driver\\Src"
             ],
             "defines": [
                 "USE_FULL_LL_DRIVER",

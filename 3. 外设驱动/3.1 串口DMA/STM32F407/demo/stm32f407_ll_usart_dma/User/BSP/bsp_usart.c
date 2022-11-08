@@ -59,7 +59,6 @@ void bsp_usart1_uart_init(void) {
   USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;             // 过采样：16bit
   LL_USART_Init(USART1, &USART_InitStruct);                             // 串口初始化
   LL_USART_ConfigAsyncMode(USART1);                                     // 设置USART模式：异步模式
-  LL_USART_Enable(USART1);                                              // 使能串口
 }
 
 /**
@@ -202,7 +201,6 @@ void bsp_usart2_uart_init(void) {
   USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;             // 过采样：16bit
   LL_USART_Init(USART2, &USART_InitStruct);                             // 串口初始化
   LL_USART_ConfigAsyncMode(USART2);                                     // 设置USART模式：异步模式
-  LL_USART_Enable(USART2);                                              // 使能串口
 }
 
 /**
