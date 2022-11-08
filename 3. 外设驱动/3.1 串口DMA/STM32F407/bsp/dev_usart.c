@@ -3,19 +3,19 @@
 
 /******************************************** 静态全局变量  *********************************************/
 
-#define __STATIC
+#define __STATIC  static
 
 // usart1 FIFO缓冲区 | DMA缓冲区
 __STATIC uint8_t usart1_rx_buf[USART1_RX_BUF_SIZE];
 __STATIC uint8_t usart1_dmarx_buf[USART1_RX_DMA_BUF_SIZE];
-__STATIC uint8_t usart1_tx_buf[USART1_RX_BUF_SIZE];
-__STATIC uint8_t usart1_dmatx_buf[USART1_RX_DMA_BUF_SIZE];
+__STATIC uint8_t usart1_tx_buf[USART1_TX_BUF_SIZE];
+__STATIC uint8_t usart1_dmatx_buf[USART1_TX_DMA_BUF_SIZE];
 
 // usart2 FIFO缓冲区 | DMA缓冲区
 __STATIC uint8_t usart2_rx_buf[USART2_RX_BUF_SIZE];
 __STATIC uint8_t usart2_dmarx_buf[USART2_RX_DMA_BUF_SIZE];
-__STATIC uint8_t usart2_tx_buf[USART2_RX_BUF_SIZE];
-__STATIC uint8_t usart2_dmatx_buf[USART2_RX_DMA_BUF_SIZE];
+__STATIC uint8_t usart2_tx_buf[USART2_TX_BUF_SIZE];
+__STATIC uint8_t usart2_dmatx_buf[USART2_TX_DMA_BUF_SIZE];
 
 // usart设备表
 __STATIC UsartDevice_T s_usart_dev[DEV_USART_COUNT] = {0};

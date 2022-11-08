@@ -110,8 +110,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    usart_dmatx_poll(DEV_USART1);
-		/* USER CODE END 3 */
+    /*
+    
+    TO DO
+    1. add usart_dmatx_poll() to task queue, exec per 5ms;
+    2. if tx_fifo_len > dmatx_buf_size ,then exec usart_dmatx_poll();
+    
+		/*
+    /* USER CODE END 3 */
 	}
 }
 
