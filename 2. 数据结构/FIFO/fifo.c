@@ -59,10 +59,10 @@ static fifo_t round_fifo_size(fifo_t size, int mode) {
 /**
  * @brief fifo静态初始化：将一个缓冲区初始化为fifo队列
  * 
- * @param fifo 
- * @param buffer_addr 
- * @param buffer_size 
- * @return int 
+ * @param fifo  FIFO指针 
+ * @param buffer_addr 缓冲区地址
+ * @param buffer_size 缓冲区大小
+ * @return int 0表示初始化成功
  */
 int fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t buffer_size) {
   assert_fifo(fifo);
@@ -82,9 +82,9 @@ int fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t buffer_size) {
 /**
  * @brief fifo动态初始化：申请一个空间初始化为fifo队列
  * 
- * @param fifo 
- * @param buffer_size 
- * @return int 
+ * @param fifo FIFO指针
+ * @param buffer_size 缓冲区大小
+ * @return int 0表示初始化成功
  */
 int fifo_alloc(FIFO_TypeDef *fifo, fifo_t buffer_size) {
   assert_fifo(fifo);
@@ -105,12 +105,12 @@ int fifo_alloc(FIFO_TypeDef *fifo, fifo_t buffer_size) {
 /**
  * @brief fifo入队函数：将len个字节数据入队
  * 
- * @param fifo 
- * @param src_buf 
- * @param len 
- * @return fifo_t 
+ * @param fifo FIFO指针
+ * @param src 源数据地址
+ * @param len 待写入的数据长度
+ * @return fifo_t 实际写入的数据长度
  */
-fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
+fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src, fifo_t len) {
   assert_fifo(fifo);
   if (fifo_is_full(fifo)) return 0;
 
@@ -118,8 +118,8 @@ fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
   len = min(len, fifo->size - fifo->in + fifo->out);
   l = min(len, fifo->size - (fifo->in & fifo->mask));
 
-  memcpy(fifo->buf + (fifo->in & fifo->mask), src_buf, l);
-  memcpy(fifo->buf, src_buf + l, len - l);
+  memcpy(fifo->buf + (fifo->in & fifo->mask), src, l);
+  memcpy(fifo->buf, src + l, len - l);
 
   barrier_fifo();
   fifo->in += len;
@@ -129,12 +129,12 @@ fifo_t fifo_write(FIFO_TypeDef *fifo, const uint8_t *src_buf, fifo_t len) {
 /**
  * @brief fifo出队函数：将len个字节数据出队
  * 
- * @param fifo 
- * @param dst_buf 
- * @param len 
- * @return fifo_t 
+ * @param fifo FIFO指针
+ * @param dst 目的地址
+ * @param len 待读取的数据长度
+ * @return fifo_t 实际读取的数据长度
  */
-fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
+fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst, fifo_t len) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
@@ -142,8 +142,8 @@ fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
   len = min(len, fifo->in - fifo->out);
   l = min(len, fifo->size - (fifo->out & fifo->mask));
 
-  memcpy(dst_buf, fifo->buf + (fifo->out & fifo->mask), l);
-  memcpy(dst_buf + l, fifo->buf, len - l);
+  memcpy(dst, fifo->buf + (fifo->out & fifo->mask), l);
+  memcpy(dst + l, fifo->buf, len - l);
 
   barrier_fifo();
   fifo->out += len;
@@ -153,12 +153,12 @@ fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t len) {
 /**
  * @brief fifo出队函数：将len个字节数据出队，但不会更新out指针
  * 
- * @param fifo 
- * @param dst_buf 
- * @param len 
- * @return fifo_t 
+ * @param fifo FIFO指针
+ * @param dst 目的地址
+ * @param len 待读取的数据长度
+ * @return fifo_t 实际读取的数据长度
  */
-fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
+fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst, fifo_t  len) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
@@ -166,8 +166,8 @@ fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
   len = min(len, fifo->in - fifo->out);
   l = min(len, fifo->size - (fifo->out & fifo->mask));
 
-  memcpy(dst_buf, fifo->buf + (fifo->out & fifo->mask), l);
-  memcpy(dst_buf + l, fifo->buf, len - l);
+  memcpy(dst, fifo->buf + (fifo->out & fifo->mask), l);
+  memcpy(dst + l, fifo->buf, len - l);
 
   return len;
 }
@@ -175,9 +175,9 @@ fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst_buf, fifo_t  len) {
 /**
  * @brief fifo入队函数：将1个字节数据入队
  * 
- * @param fifo 
- * @param c 
- * @return fifo_t 
+ * @param fifo FIFO指针
+ * @param c 待写入的字节数据
+ * @return fifo_t 实际写入的数据长度
  */
 fifo_t fifo_write_byte(FIFO_TypeDef *fifo, uint8_t c) {
   assert_fifo(fifo);
@@ -193,15 +193,15 @@ fifo_t fifo_write_byte(FIFO_TypeDef *fifo, uint8_t c) {
 /**
  * @brief fifo出队函数：将1个字节数据出队
  * 
- * @param fifo 
- * @param c 
- * @return fifo_t 
+ * @param fifo  FIFO指针 
+ * @param dst 目的地址
+ * @return fifo_t 实际读取的字节数
  */
-fifo_t fifo_read_byte(FIFO_TypeDef *fifo, uint8_t *c) {
+fifo_t fifo_read_byte(FIFO_TypeDef *fifo, uint8_t *dst) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
-  *c = fifo->buf[fifo->out & fifo->mask];
+  *dst = fifo->buf[fifo->out & fifo->mask];
   
   barrier_fifo();
   fifo->out++;
@@ -211,15 +211,15 @@ fifo_t fifo_read_byte(FIFO_TypeDef *fifo, uint8_t *c) {
 /**
  * @brief fifo出队函数：将1个字节数据出队，但不会更新out指针
  * 
- * @param fifo 
- * @param c 
- * @return fifo_t 
+ * @param fifo FIFO指针
+ * @param dst 目的地址
+ * @return fifo_t 实际读取的字节数
  */
-fifo_t fifo_read_byte_peek(FIFO_TypeDef *fifo, uint8_t *c) {
+fifo_t fifo_read_byte_peek(FIFO_TypeDef *fifo, uint8_t *dst) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 
-  *c = fifo->buf[fifo->out & fifo->mask];
+  *dst = fifo->buf[fifo->out & fifo->mask];
   
   return 1;
 }

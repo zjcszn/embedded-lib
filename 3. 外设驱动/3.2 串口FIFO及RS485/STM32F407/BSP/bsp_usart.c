@@ -60,7 +60,7 @@ void bsp_usart1_uart_init(void) {
 }
 
 /**
- * @brief usart1 串口中断及DMA中断初始化
+ * @brief usart1 串口中断初始化
  * 
  */
 void bsp_usart1_nvic_init(void) {
@@ -77,7 +77,7 @@ void bsp_usart2_nvic_init(void);
 void bsp_usart2_rs485_init(void);
 
 /**
- * @brief 串口初始化程序：GPIO初始化 | NVIC初始化 | USART初始化
+ * @brief 串口初始化程序：GPIO初始化 | RS485初始化 | NVIC初始化 | USART初始化
  * 
  */
 void bsp_usart2_init(void) {
@@ -132,7 +132,7 @@ void bsp_usart2_uart_init(void) {
 
 
 /**
- * @brief usart2 串口中断及DMA中断初始化
+ * @brief usart2 串口中断初始化
  * 
  */
 void bsp_usart2_nvic_init(void) {
@@ -140,12 +140,16 @@ void bsp_usart2_nvic_init(void) {
   NVIC_EnableIRQ(USART2_IRQN);                                                                     // 使能串口中断       
 }
 
+/**
+ * @brief usart2 RS485初始化
+ * 
+ */
 void bsp_usart2_rs485_init(void) {
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;                           // GPIO 模式: 输出模式
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;                      // GPIO 速度：High
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;                 // GPIO 输出模式：推挽输出
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;                               // GPIO 上下拉：上拉
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;                               // GPIO 上下拉：无
   GPIO_InitStruct.Pin = USART2_RS485_RE_PIN;                            // GPIO PIN: RS485 RE
   LL_GPIO_Init(USART2_RS485_RE_PORT, &GPIO_InitStruct);                 // RS485 RE GPIO 初始化
 }

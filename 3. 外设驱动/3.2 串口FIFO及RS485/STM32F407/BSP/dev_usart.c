@@ -56,13 +56,13 @@ void usart_device_init(uint8_t usart_id) {
  * @brief 串口发送函数：将待发送数据写入发送FIFO缓冲区
  * 
  * @param usart_id 串口设备号 DEV_USART1 | DEV_USART2
- * @param src_buf 源数据地址
+ * @param src 源数据地址
  * @param size 源数据字节数
  * @return uint16_t 成功写入的字节数
  */
-uint16_t usart_write(uint8_t usart_id, const uint8_t *src_buf, uint16_t size) {
+uint16_t usart_write(uint8_t usart_id, const uint8_t *src, uint16_t size) {
   uint16_t wr_cnt; 
-  wr_cnt = fifo_write(&s_usart_dev[usart_id].tx_fifo, src_buf, size);
+  wr_cnt = fifo_write(&s_usart_dev[usart_id].tx_fifo, src, size);
   if (wr_cnt) {
     if (usart_id == DEV_USART2) {
       USART2_RS485_TX();    // 将RS485控制器切换到发送模式
@@ -76,12 +76,12 @@ uint16_t usart_write(uint8_t usart_id, const uint8_t *src_buf, uint16_t size) {
  * @brief 串口字节发送函数：将一个字节数据写入发送FIFO缓冲区
  * 
  * @param usart_id 串口设备号 DEV_USART1 | DEV_USART2
- * @param src_buf 源数据地址
+ * @param src 源数据地址
  * @return uint16_t 成功写入的字节数
  */
-uint16_t usart_write_byte(uint8_t usart_id, const uint8_t *src_buf) {
+uint16_t usart_write_byte(uint8_t usart_id, const uint8_t *src) {
   uint16_t wr_cnt; 
-  wr_cnt = fifo_write_byte(&s_usart_dev[usart_id].tx_fifo, *src_buf);
+  wr_cnt = fifo_write_byte(&s_usart_dev[usart_id].tx_fifo, *src);
   if (wr_cnt) {
     if (usart_id == DEV_USART2) {
       USART2_RS485_TX();    // 将RS485控制器切换到发送模式
@@ -95,23 +95,23 @@ uint16_t usart_write_byte(uint8_t usart_id, const uint8_t *src_buf) {
  * @brief 串口接收数据读取函数：从接收FIFO缓冲区中读取数据
  * 
  * @param usart_id 串口设备号
- * @param dst_buf 目标缓冲区
+ * @param dst 目标缓冲区
  * @param size 待读取的字节数
  * @return uint16_t 成功读取的字节数
  */
-uint16_t usart_read(uint8_t usart_id, uint8_t *dst_buf, uint16_t size) {
-  return fifo_read(&s_usart_dev[usart_id].rx_fifo, dst_buf, size);
+uint16_t usart_read(uint8_t usart_id, uint8_t *dst, uint16_t size) {
+  return fifo_read(&s_usart_dev[usart_id].rx_fifo, dst, size);
 }
 
 /**
  * @brief 串口接收数据字节读取函数：从接收FIFO缓冲区中读取一个字节数据
  * 
  * @param usart_id 串口设备号
- * @param dst_buf 目标缓冲区
+ * @param dst 目标缓冲区
  * @return uint16_t 成功读取的字节数
  */
-uint16_t usart_read_byte(uint8_t usart_id, uint8_t *dst_buf) {
-  return fifo_read_byte(&s_usart_dev[usart_id].rx_fifo, dst_buf);
+uint16_t usart_read_byte(uint8_t usart_id, uint8_t *dst) {
+  return fifo_read_byte(&s_usart_dev[usart_id].rx_fifo, dst);
 }
 
 /************************************* USART RX: 串口RX非空中断处理  *************************************/
