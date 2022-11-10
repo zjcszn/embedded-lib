@@ -31,13 +31,11 @@ extern "C" {
   #if defined (__CORTEX_M)
     #include "cmsis_compiler.h"
     #define barrier_fifo() __DSB()    // ARM数据同步屏障
-  #elif defined (__GNUC__)
-    #define barrier_fifo() __sync_synchronize()
-  #else
-    #define barrier_fifo() ((void)0U)
   #endif
-#else
-  #define barrier_fifo() ((void)0U)
+#endif
+
+#ifndef barrier_fifo() 
+#define barrier_fifo() ((void)0U)
 #endif
 
 typedef uint32_t fifo_t ;
