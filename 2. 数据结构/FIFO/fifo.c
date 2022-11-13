@@ -14,10 +14,14 @@
 #include <string.h>
 #include <errno.h>
 
-#define min(x,y) ((x) < (y) ? (x) : (y))
+/****************************************** 宏定义 ******************************************/
 
 #define ROUND_UP 1    // 向上调整为2的N次幂
 #define ROUND_DN 0    // 向下调整为2的N次幂
+
+#ifdef min
+#undef min
+#endif
 
 #if (USE_FIFO_ASSERT == 1)
   #define assert_fifo(expr) ((expr) ? (void)0 : assert_fifo_failed((uint8_t *)__FILE__, __LINE__))
@@ -29,6 +33,14 @@
   #define assert_fifo(expr) ((void)0UL)
 #endif
 
+/*************************************** 私有函数声明 ****************************************/
+
+static inline int check_fifo_size(fifo_t size);
+static fifo_t round_fifo_size(fifo_t size, int mode);
+static inline fifo_t min(fifo_t x, fifo_t y);
+
+/***************************************** 函数定义 *****************************************/
+
 /**
  * @brief 检查fifo缓冲区大小是否是2的N次幂
  * 
@@ -39,6 +51,13 @@ static inline int check_fifo_size(fifo_t size) {
   return (size & (size - 1));
 }
 
+/**
+ * @brief 调整fifo缓冲区大小，使其满足2的N次幂
+ * 
+ * @param size 原缓冲区大小
+ * @param mode 模式：ROUND_UP | ROUND_DN
+ * @return fifo_t 调整后的缓冲区大小 
+ */
 static fifo_t round_fifo_size(fifo_t size, int mode) {
   assert_fifo(mode == ROUND_UP || mode == ROUND_DN);
   if (!size) return ((fifo_t)1UL);
@@ -224,5 +243,8 @@ fifo_t fifo_read_byte_peek(FIFO_TypeDef *fifo, uint8_t *dst) {
   return 1;
 }
 
+static inline fifo_t min(fifo_t x, fifo_t y) {
+  return (x < y ? x : y);
+}
 
 

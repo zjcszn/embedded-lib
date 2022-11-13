@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+/****************************************** 宏定义 ******************************************/
+
 #define USE_FIFO_LOCK         0      // 使用互斥锁
 #define USE_FIFO_BARRIER      0      // 使用内存屏障
 #define USE_FIFO_ASSERT       0      // 使用assert宏
@@ -38,7 +40,9 @@ extern "C" {
 #define barrier_fifo() ((void)0U)
 #endif
 
-typedef uint32_t fifo_t ;
+/***************************************** 类型声明 *****************************************/
+
+typedef uint32_t fifo_t;
 
 typedef struct _fifo{
         uint8_t *buf;   // 环形缓冲区地址
@@ -47,6 +51,8 @@ typedef struct _fifo{
   __IO  fifo_t  in;     // 写指针
   __IO  fifo_t  out;    // 读指针
 }FIFO_TypeDef;
+
+/***************************************** 内联函数 *****************************************/
 
 // 重置fifo
 static inline void fifo_reset(FIFO_TypeDef *fifo) {
@@ -60,7 +66,7 @@ static inline int fifo_is_empty(FIFO_TypeDef *fifo) {
 }
 
 // fifo缓冲区中已写入的字节长度
-static inline fifo_t  fifo_len(FIFO_TypeDef *fifo) {
+static inline fifo_t fifo_len(FIFO_TypeDef *fifo) {
   barrier_fifo();
   return (fifo->in - fifo->out);
 }
@@ -70,6 +76,8 @@ static inline int fifo_is_full(FIFO_TypeDef *fifo) {
   barrier_fifo();
   return (fifo->size == (fifo->in - fifo->out));
 }
+
+/***************************************** 外部声明 *****************************************/
 
 int    fifo_init(FIFO_TypeDef *fifo, uint8_t *buffer_addr, fifo_t  buffer_size);
 int    fifo_alloc(FIFO_TypeDef *fifo, fifo_t  buffer_size);
