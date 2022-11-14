@@ -51,7 +51,7 @@ static volatile  hbtn_status_t hbtn_status = 0;
 
 #define HBTN_STAT_POS(i)    (1U << (i))
 #define HBTN_STAT_GET(i)    ((hbtn_status >> (i)) & 1U)
-#define HBTN_STATUS_MASK      (~((~((hbtn_status_t)0ULL)) << HBUTTON_COUNT))
+#define HBTN_STATUS_MASK    (~((~((hbtn_status_t)0ULL)) << HBUTTON_COUNT))
 
 /**
  * @brief 检查硬件按键状态是否发生改变
@@ -109,7 +109,7 @@ void button_scan(void) {
 }
 
 /**
- * @brief 更新硬件按键状态表（含消抖处理）：动作状态 | 释放状态
+ * @brief 更新硬件按键状态表（含消抖处理）
  * 
  * @param 
  */
