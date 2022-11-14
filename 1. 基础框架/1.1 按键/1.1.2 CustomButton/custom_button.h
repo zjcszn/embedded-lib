@@ -93,9 +93,9 @@ typedef struct {
 
 /********************** 函数声明 **********************/
 
-void read_hbtn_gpio_regesiter (uint8_t(*cb)(uint8_t hbtn_id));
+void button_init (uint8_t(*cb)(uint8_t hbtn_id));
 void button_scan(void);
-int get_button_event(ButtonEvent_T *buf);
+int  button_event_get(ButtonEvent_T *buf);
 
 #ifdef __cplusplus
 }

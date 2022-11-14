@@ -23,7 +23,7 @@ static struct {
   volatile uint8_t  w;                        // 写指针
 } event_fifo = {0};
 
-static inline uint8_t event_fifo_used(void) {
+static inline uint8_t fifo_used(void) {
   return (event_fifo.w - event_fifo.r);
 }
 
@@ -32,7 +32,7 @@ static inline int is_fifo_empty(void) {
 }
 
 static inline int is_fifo_full(void) {
-  return (event_fifo_used() == EVENT_FIFO_SIZE);
+  return (fifo_used() == EVENT_FIFO_SIZE);
 }
 
 /****************************** 硬件按键配置 ******************************/
@@ -49,14 +49,21 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
 typedef uint32_t hbtn_status_t;   // 硬件按键数量必须小于hbtn_status_t位数
 static volatile  hbtn_status_t hbtn_status = 0;
 
-#define HBTN_MASK(i)      (1U << (i))
-#define GET_HBTN_STAT(i)  ((hbtn_status >> (i)) & 1U)
-#define HBTN_STATUS_MASK  ((~((hbtn_status_t)0U)) >> ((sizeof(hbtn_status_t) << 3) - HBUTTON_COUNT))
+#define HBTN_STAT_POS(i)    (1U << (i))
+#define HBTN_STAT_GET(i)    ((hbtn_status >> (i)) & 1U)
+#define HBTN_STATUS_MASK      (~((~((hbtn_status_t)0ULL)) << HBUTTON_COUNT))
 
-static uint8_t   (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
+/**
+ * @brief 检查硬件按键状态是否发生改变
+ * 
+ * @param hbtn_id 硬件按键ID
+ * @return int 0:状态未改变 1：状态发生改变
+ */
 static inline int check_hbtn_status(uint8_t hbtn_id) {
-  return (GET_HBTN_STAT(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
+  return (HBTN_STAT_GET(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
 }
+
+static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
 /***************************** 自定义按键配置 *****************************/
 
@@ -72,27 +79,26 @@ static Button_T button_list[BUTTON_COUNT] = {
   [BUTTON_COMBO2] = {BUTTON_COMBO2, BUTTON_TYPE_COMBO,  STATE_IDLE, HBUTTON_WKUP, HBUTTON_KEY2, 0},
 };
 
-
 /****************************** 私有函数声明 ******************************/
 
 static void hbtn_status_update(void);
-static int  get_button_action(Button_T *btn);
+static int  button_action_get(Button_T *btn);
 static void button_fsm_update(Button_T *btn);
-static int  put_button_event(uint8_t btn_id, uint8_t btn_event);
+static int  button_event_put(uint8_t btn_id, uint8_t btn_event);
 
 /******************************** 函数定义 ********************************/
 
 /**
- * @brief 注册硬件按键GPIO读取函数
+ * @brief 按键框架初始化函数
  * 
- * @param cb 回调函数
+ * @param cb read_hbtn_gpio回调函数
  */
-void read_hbtn_gpio_regesiter (uint8_t(*cb)(uint8_t hbtn_id)) {
+void button_init (uint8_t(*cb)(uint8_t hbtn_id)) {
   read_hbtn_gpio = cb;
 }
 
 /**
- * @brief 按键扫描函数，定时器或主循环中执行
+ * @brief 按键扫描函数
  * 
  */
 void button_scan(void) {
@@ -103,7 +109,7 @@ void button_scan(void) {
 }
 
 /**
- * @brief 硬件按键状态扫描函数，经消抖处理后更新至hbt_status
+ * @brief 更新硬件按键状态表（含消抖处理）：动作状态 | 释放状态
  * 
  * @param 
  */
@@ -111,8 +117,8 @@ static void hbtn_status_update(void) {
   for (int i = 0; i < HBUTTON_COUNT; i++) {
     if (check_hbtn_status(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
-        // 按键状态翻转
-        hbtn_status ^= HBTN_MASK(i);
+        // 按键键值翻转
+        hbtn_status ^= HBTN_STAT_POS(i);
         hbtn_list[i].filter_cnt = 0;
       }      
     }
@@ -130,24 +136,24 @@ static void hbtn_status_update(void) {
  * @param  
  * @return int 0表示按键释放，1表示按键按下，2表示按键被打断
  */
-static int get_button_action(Button_T *btn) {
+static int button_action_get(Button_T *btn) {
   // 单键：只有指定的按键可以动作，其他按键的动作会打断当前按键
   if (btn->type == BUTTON_TYPE_SINGLE) {
-    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1))) {
+    if (hbtn_status & ~(HBTN_STAT_POS(btn->hbtn_1))) {
       return BUTTON_ACTION_BRK;
     }
     else {
-      return GET_HBTN_STAT(btn->hbtn_1);
+      return HBTN_STAT_GET(btn->hbtn_1);
     }
   }
   // 组合键：严格的先后顺序，必须先按下一个按键，才能触发组合按键
   else {
-    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1) | HBTN_MASK(btn->hbtn_2))) {
+    if (hbtn_status & ~(HBTN_STAT_POS(btn->hbtn_1) | HBTN_STAT_POS(btn->hbtn_2))) {
       return BUTTON_ACTION_BRK;
     }
     else {
-      if (GET_HBTN_STAT(btn->hbtn_1)) {
-        return GET_HBTN_STAT(btn->hbtn_2);
+      if (HBTN_STAT_GET(btn->hbtn_1)) {
+        return HBTN_STAT_GET(btn->hbtn_2);
       }
       else {
         return BUTTON_ACTION_BRK;
@@ -157,16 +163,16 @@ static int get_button_action(Button_T *btn) {
 }
 
 /**
- * @brief 自定义按键 状态机处理程序，更新按键状态并推送按键事件
+ * @brief 按键状态机处理程序，更新按键状态并推送按键事件
  * 
  * @param btn 按键结构体
  */
 void button_fsm_update(Button_T *btn) {
-  int btn_action = get_button_action(btn);
+  int btn_action = button_action_get(btn);
   switch (btn->state) {
     case STATE_IDLE:
       if (btn_action == BUTTON_ACTION_DOWN) {
-        put_button_event(btn->id, EVENT_PRESS_DOWN);
+        button_event_put(btn->id, EVENT_PRESS_DOWN);
         btn->ticks = 0;
         btn->state = STATE_PRESS_DOWN;
       }
@@ -178,13 +184,13 @@ void button_fsm_update(Button_T *btn) {
       }
       else if (btn_action == BUTTON_ACTION_DOWN) {
 				if (++btn->ticks >= TICKS_LONG_PRESS) {
-					put_button_event(btn->id, EVENT_LONG_PRESS_START);
+					button_event_put(btn->id, EVENT_LONG_PRESS_START);
           btn->ticks = 0;
           btn->state = STATE_PRESS_LONG;
 				}
       }
       else {
-        put_button_event(btn->id, EVENT_PRESS_UP);
+        button_event_put(btn->id, EVENT_PRESS_UP);
         btn->state = STATE_IDLE;
       }
       break;
@@ -196,12 +202,12 @@ void button_fsm_update(Button_T *btn) {
       else if (btn_action == BUTTON_ACTION_DOWN)
       {
         if (++btn->ticks >= TICKS_LONG_PRESS_HOLD) {
-          put_button_event(btn->id, EVENT_LONG_PRESS_HOLD);
+          button_event_put(btn->id, EVENT_LONG_PRESS_HOLD);
           btn->ticks = 0;
         }
       }
       else {
-        put_button_event(btn->id, EVENT_LONG_PRESS_UP);
+        button_event_put(btn->id, EVENT_LONG_PRESS_UP);
         btn->state = STATE_IDLE;
       }
       break;
@@ -218,7 +224,14 @@ void button_fsm_update(Button_T *btn) {
   }
 }
 
-int put_button_event(uint8_t btn_id, uint8_t btn_event) {
+/**
+ * @brief 推送按键事件
+ *  
+ * @param btn_id  按键ID 
+ * @param btn_event 按键事件
+ * @return int 1表示推送成功 0表示推送失败（缓冲区满）
+ */
+int button_event_put(uint8_t btn_id, uint8_t btn_event) {
   if (is_fifo_full()) return 0;
   ButtonEvent_T *target = &event_fifo.buf[event_fifo.w & EVENT_FIFO_MASK];
   target->button_id    = btn_id;
@@ -227,7 +240,13 @@ int put_button_event(uint8_t btn_id, uint8_t btn_event) {
   return 1;
 }
 
-int get_button_event(ButtonEvent_T *buf) {
+/**
+ * @brief 获取按键事件
+ * 
+ * @param buf 按键事件
+ * @return int 1表示获取成功 0表示获取失败（无事件）
+ */
+int button_event_get(ButtonEvent_T *buf) {
   if (is_fifo_empty()) return 0;
   ButtonEvent_T *target = &event_fifo.buf[event_fifo.r & EVENT_FIFO_MASK];
   buf->button_id    = target->button_id;
