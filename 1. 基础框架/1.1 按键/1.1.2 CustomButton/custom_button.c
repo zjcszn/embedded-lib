@@ -2,41 +2,35 @@
 
 /******************************** 宏定义 ********************************/
 
-// Ticks宏定义
 #define TICKS_INTERVAL          ( 10U)        // 嘀嗒周期：10ms
 #define TICKS_FILTER            (  2U)        // 消抖采样次数
 #define TICKS_PRESS_REPEAT      ( 20U)        // 嘀嗒计数器阈值： 200ms(重复按下)
 #define TICKS_LONG_PRESS        (100U)        // 嘀嗒计数器阈值：1000ms(长按触发)
 #define TICKS_LONG_PRESS_HOLD   (  5U)        // 嘀嗒计数器阈值：  50ms(长按事件推送间隔)
 
-// 动作电平宏定义
 #define ACT_LEVEL_L             (  0U)        // 按键动作电平：低电平
 #define ACT_LEVEL_H             (  1U)        // 按键动作电平：高电平
 
 /******************************* FIFO设置 *******************************/
 
-// FIFO缓冲区大小
 #define EVENT_FIFO_SIZE         (16U)
 #define EVENT_FIFO_MASK         (EVENT_FIFO_SIZE - 1)
 
-// 事件循环队列结构体
+// 事件fifo
 static struct {
-  ButtonEvent_T     buf[EVENT_FIFO_SIZE];     // FIFO buffer
+  ButtonEvent_T     buf[EVENT_FIFO_SIZE];     // fifo缓冲区
   volatile uint8_t  r;                        // 读指针
   volatile uint8_t  w;                        // 写指针
 } event_fifo = {0};
 
-// 检查队列已存储的事件数量
 static inline uint8_t event_fifo_used(void) {
   return (event_fifo.w - event_fifo.r);
 }
 
-// 检查队列是否为空，空返回1，非空返回0
 static inline int is_fifo_empty(void) {
   return (event_fifo.w == event_fifo.r);
 }
 
-// 检查队列是否已满，满返回1，不满返回0
 static inline int is_fifo_full(void) {
   return (event_fifo_used() == EVENT_FIFO_SIZE);
 }
@@ -53,23 +47,14 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
 };
 
 typedef uint32_t hbtn_status_t;   // 硬件按键数量必须小于hbtn_status_t位数
+static volatile  hbtn_status_t hbtn_status = 0;
 
-// 硬件按键状态表：按键消抖后的状态值存入此表，供应用层处理
-static volatile hbtn_status_t hbtn_status = 0;
-
-// 硬件按键状态掩码
 #define HBTN_MASK(i)      (1U << (i))
-// hbtn_status 状态表掩码
+#define GET_HBTN_STAT(i)  ((hbtn_status >> (i)) & 1U)
 #define HBTN_STATUS_MASK  ((~((hbtn_status_t)0U)) >> ((sizeof(hbtn_status_t) << 3) - HBUTTON_COUNT))
 
-// 获取硬件按键IO输入的回调函数
-static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
-
-// 获取当前的硬件按键状态
-#define GET_HBTN_STAT(i)  ((hbtn_status >> (i)) & 1U)
-
-// 检查硬件按键状态是否发生变化，返回0：状态未改变  返回1：状态改变
-static inline int check_hbt_stat(uint8_t hbtn_id) {
+static uint8_t   (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
+static inline int check_hbtn_status(uint8_t hbtn_id) {
   return (GET_HBTN_STAT(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
 }
 
@@ -124,7 +109,7 @@ void button_scan(void) {
  */
 static void hbtn_status_update(void) {
   for (int i = 0; i < HBUTTON_COUNT; i++) {
-    if (check_hbt_stat(i)) {
+    if (check_hbtn_status(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
         // 按键状态翻转
         hbtn_status ^= HBTN_MASK(i);
