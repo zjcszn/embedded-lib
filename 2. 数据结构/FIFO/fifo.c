@@ -16,8 +16,8 @@
 
 /****************************************** 宏定义 ******************************************/
 
-#define ROUND_UP 1    // 向上调整为2的N次幂
-#define ROUND_DN 0    // 向下调整为2的N次幂
+#define ROUND_UP      1    // 向上调整为2的N次幂
+#define ROUND_DN      0    // 向下调整为2的N次幂
 
 #ifdef min
 #undef min
@@ -65,7 +65,7 @@ static fifo_t round_fifo_size(fifo_t size, int mode) {
   fifo_t  position = 0;
   while (size != 0) {
     position ++;
-    size = size >> 1UL;    
+    size >>= 1UL;    
   }
   position = mode ? position : position - 1;
   // 如果溢出，返回可表示的最大的2的N次幂 
@@ -177,7 +177,7 @@ fifo_t fifo_read(FIFO_TypeDef *fifo, uint8_t *dst, fifo_t len) {
  * @param len 待读取的数据长度
  * @return fifo_t 实际读取的数据长度
  */
-fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst, fifo_t  len) {
+fifo_t fifo_read_peek(FIFO_TypeDef *fifo, uint8_t *dst, fifo_t len) {
   assert_fifo(fifo);
   if (fifo_is_empty(fifo)) return 0;
 

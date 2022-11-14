@@ -66,7 +66,7 @@ static inline int fifo_is_empty(FIFO_TypeDef *fifo) {
 }
 
 // fifo缓冲区中已写入的字节长度
-static inline fifo_t fifo_len(FIFO_TypeDef *fifo) {
+static inline fifo_t fifo_used(FIFO_TypeDef *fifo) {
   barrier_fifo();
   return (fifo->in - fifo->out);
 }
