@@ -49,9 +49,12 @@ static HButton_T hbtn_list[HBUTTON_COUNT] = {
 typedef uint32_t hbtn_status_t;   // 硬件按键数量必须小于hbtn_status_t位数
 static volatile  hbtn_status_t hbtn_status = 0;
 
-#define HBTN_STAT_POS(i)    (1U << (i))
+#define HBTN_MASK(i)        (1U << (i))
+#define HBTN_MASK_ALL       (~((~((hbtn_status_t)0ULL)) << HBUTTON_COUNT))
 #define HBTN_STAT_GET(i)    ((hbtn_status >> (i)) & 1U)
-#define HBTN_STATUS_MASK    (~((~((hbtn_status_t)0ULL)) << HBUTTON_COUNT))
+
+
+static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
 /**
  * @brief 检查硬件按键状态是否发生改变
@@ -62,8 +65,6 @@ static volatile  hbtn_status_t hbtn_status = 0;
 static inline int check_hbtn_status(uint8_t hbtn_id) {
   return (HBTN_STAT_GET(hbtn_id) != (read_hbtn_gpio(hbtn_id) == hbtn_list[hbtn_id].act_level));
 }
-
-static uint8_t (*read_hbtn_gpio)(uint8_t hbtn_id) = NULL;
 
 /***************************** 自定义按键配置 *****************************/
 
@@ -118,7 +119,7 @@ static void hbtn_status_update(void) {
     if (check_hbtn_status(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
         // 按键键值翻转
-        hbtn_status ^= HBTN_STAT_POS(i);
+        hbtn_status ^= HBTN_MASK(i);
         hbtn_list[i].filter_cnt = 0;
       }      
     }
@@ -127,7 +128,7 @@ static void hbtn_status_update(void) {
     }
   }
   // 非有效按键位置0
-  hbtn_status &= HBTN_STATUS_MASK;
+  hbtn_status &= HBTN_MASK_ALL;
 }
 
 /**
@@ -139,7 +140,7 @@ static void hbtn_status_update(void) {
 static int button_action_get(Button_T *btn) {
   // 单键：只有指定的按键可以动作，其他按键的动作会打断当前按键
   if (btn->type == BUTTON_TYPE_SINGLE) {
-    if (hbtn_status & ~(HBTN_STAT_POS(btn->hbtn_1))) {
+    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1))) {
       return BUTTON_ACTION_BRK;
     }
     else {
@@ -148,7 +149,7 @@ static int button_action_get(Button_T *btn) {
   }
   // 组合键：严格的先后顺序，必须先按下一个按键，才能触发组合按键
   else {
-    if (hbtn_status & ~(HBTN_STAT_POS(btn->hbtn_1) | HBTN_STAT_POS(btn->hbtn_2))) {
+    if (hbtn_status & ~(HBTN_MASK(btn->hbtn_1) | HBTN_MASK(btn->hbtn_2))) {
       return BUTTON_ACTION_BRK;
     }
     else {
