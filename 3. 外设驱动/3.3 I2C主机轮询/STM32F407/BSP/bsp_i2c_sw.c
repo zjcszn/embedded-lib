@@ -39,8 +39,8 @@ void soft_i2c_init(void) {
   GPIO_InitStruct.Pin = SOFT_I2C_SDA_PIN;                       // I2C SDA PIN
   LL_GPIO_Init(SOFT_I2C_SDA_PORT, &GPIO_InitStruct);            // I2C SDA PIN初始化
 
-  I2C_SDA_H();
-  I2C_SCL_H();
+  I2C_SDA_HIGH();
+  I2C_SCL_HIGH();
 }
 
 /**
@@ -87,10 +87,10 @@ int soft_i2c_master_read(uint8_t slave_addr, uint8_t *dst, uint16_t length) {
  * 
  */
 void soft_i2c_master_start(void) {
-  I2C_SCL_H();
-  I2C_SDA_H();
+  I2C_SCL_HIGH();
+  I2C_SDA_HIGH();
   I2C_DELAY();
-  I2C_SDA_L();
+  I2C_SDA_LOW();
 }
 
 /**
@@ -98,12 +98,12 @@ void soft_i2c_master_start(void) {
  * 
  */
 void soft_i2c_master_stop(void) {
-  I2C_SCL_L();
-  I2C_SDA_L();
+  I2C_SCL_LOW();
+  I2C_SDA_LOW();
   I2C_DELAY();
-  I2C_SCL_H();
+  I2C_SCL_HIGH();
   I2C_DELAY();
-  I2C_SDA_H();
+  I2C_SDA_HIGH();
 }
 
 /**
@@ -114,10 +114,10 @@ void soft_i2c_master_stop(void) {
  */
 int soft_i2c_master_send_byte(uint8_t byte) {
   for (int i = 0; i < 8; i++) {
-    I2C_SCL_L();
-    byte & 0x80 ? I2C_SDA_H() : I2C_SDA_L();
+    I2C_SCL_LOW();
+    byte & 0x80 ? I2C_SDA_HIGH() : I2C_SDA_LOW();
     I2C_DELAY();
-    I2C_SCL_H();
+    I2C_SCL_HIGH();
     I2C_DELAY();
     byte <<= 1U;
   }
@@ -134,10 +134,10 @@ int soft_i2c_master_send_byte(uint8_t byte) {
  * @return int 
  */
 int soft_i2c_master_wait_ack(void) {
-  I2C_SCL_L();
-  I2C_SDA_H();
+  I2C_SCL_LOW();
+  I2C_SDA_HIGH();
   I2C_DELAY();
-  I2C_SCL_H();
+  I2C_SCL_HIGH();
   I2C_DELAY();
   return I2C_SDA_READ();
 }
@@ -147,13 +147,13 @@ int soft_i2c_master_wait_ack(void) {
  * 
  */
 void soft_i2c_master_send_ack(void) {
-  I2C_SCL_L();
-  I2C_SDA_L();
+  I2C_SCL_LOW();
+  I2C_SDA_LOW();
   I2C_DELAY();
-  I2C_SCL_H();
+  I2C_SCL_HIGH();
   I2C_DELAY();
-  I2C_SCL_L();
-  I2C_SDA_H();
+  I2C_SCL_LOW();
+  I2C_SDA_HIGH();
 }
 
 /**
@@ -161,13 +161,13 @@ void soft_i2c_master_send_ack(void) {
  * 
  */
 void soft_i2c_master_send_nack(void) {
-  I2C_SCL_L();
-  I2C_SDA_H();
+  I2C_SCL_LOW();
+  I2C_SDA_HIGH();
   I2C_DELAY();
-  I2C_SCL_H();
+  I2C_SCL_HIGH();
   I2C_DELAY();
-  I2C_SCL_L();
-  I2C_SDA_H();
+  I2C_SCL_LOW();
+  I2C_SDA_HIGH();
 }
 
 /**
@@ -178,9 +178,9 @@ void soft_i2c_master_send_nack(void) {
 uint8_t soft_i2c_master_recv_byte(void) {
   uint8_t recv_tmp;
   for (int i = 0; i < 8; i++) {
-    I2C_SCL_L();
+    I2C_SCL_LOW();
     I2C_DELAY();
-    I2C_SCL_H();
+    I2C_SCL_HIGH();
     I2C_DELAY();
     recv_tmp = (recv_tmp << 1) | I2C_SDA_READ();
   }

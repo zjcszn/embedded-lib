@@ -18,10 +18,10 @@
 #define SOFT_I2C_SDA_PIN      LL_GPIO_PIN_9         // 模拟I2C 数据线GPIO引脚
 #define SOFT_I2C_SCL_FEQ      400000U               // 模拟I2C 时钟频率
 
-#define I2C_SCL_H()           LL_GPIO_SetOutputPin(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)       // SCL拉高
-#define I2C_SCL_L()           LL_GPIO_ResetOutputPin(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)     // SCL拉低
-#define I2C_SDA_H()           LL_GPIO_SetOutputPin(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)       // SDA拉高
-#define I2C_SDA_L()           LL_GPIO_ResetOutputPin(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)     // SDA拉低
+#define I2C_SCL_HIGH()        LL_GPIO_SetOutputPin(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)       // SCL拉高
+#define I2C_SCL_LOW()         LL_GPIO_ResetOutputPin(SOFT_I2C_SCL_PORT, SOFT_I2C_SCL_PIN)     // SCL拉低
+#define I2C_SDA_HIGH()        LL_GPIO_SetOutputPin(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)       // SDA拉高
+#define I2C_SDA_LOW()         LL_GPIO_ResetOutputPin(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)     // SDA拉低
 #define I2C_SDA_READ()        LL_GPIO_IsInputPinSet(SOFT_I2C_SDA_PORT, SOFT_I2C_SDA_PIN)      // 读取SDA输入数据
 
 #define I2C_DELAY()           dwt_delay_us(i2c_delay_time)  // I2C延迟函数
