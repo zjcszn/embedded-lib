@@ -24,7 +24,6 @@ void bsp_usart1_init(uint8_t *dmarx_buf_addr, uint32_t dmarx_buf_size) {
   bsp_usart1_uart_init();
 
   LL_USART_EnableDMAReq_RX(USART1);         // 使能串口RX DMA传输
-  LL_USART_EnableDMAReq_TX(USART1);         // 使能串口TX DMA传输
   LL_USART_EnableIT_IDLE(USART1);           // 使能串口空闲中断
   LL_USART_Enable(USART1);                  // 使能串口
 }
@@ -136,6 +135,7 @@ void bsp_usart1_dmatx_config(uint8_t *dmatx_buf_addr, uint32_t data_length) {
       
   LL_DMA_EnableIT_TC(USART1_TX_DMA, USART1_TX_DMA_STREAM);                // 使能发送完成中断
   LL_DMA_EnableStream(USART1_TX_DMA, USART1_TX_DMA_STREAM);               // 使能DMA数据流
+  LL_USART_EnableDMAReq_TX(USART1);                                       // 使能串口TX DMA传输
 } 
 
 uint16_t bsp_usart1_dmarx_buf_remain_size(void) {
@@ -166,7 +166,6 @@ void bsp_usart2_init(uint8_t *dmarx_buf_addr, uint32_t dmarx_buf_size) {
   bsp_usart2_uart_init();
 
   LL_USART_EnableDMAReq_RX(USART2);         // 使能串口RX DMA传输
-  LL_USART_EnableDMAReq_TX(USART2);         // 使能串口TX DMA传输
   LL_USART_EnableIT_IDLE(USART2);           // 使能串口空闲中断
   LL_USART_Enable(USART2);                  // 使能串口
 }
@@ -278,6 +277,8 @@ void bsp_usart2_dmatx_config(uint8_t *dmatx_buf_addr, uint32_t data_length) {
       
   LL_DMA_EnableIT_TC(USART2_TX_DMA, USART2_TX_DMA_STREAM);                // 使能发送完成中断
   LL_DMA_EnableStream(USART2_TX_DMA, USART2_TX_DMA_STREAM);               // 使能DMA数据流
+  LL_USART_EnableDMAReq_TX(USART2);                                       // 使能串口TX DMA传输
+
 } 
 
 uint16_t bsp_usart2_dmarx_buf_remain_size(void) {
