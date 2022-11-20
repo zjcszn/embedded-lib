@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dev_i2c_dma.h"
+#include "dwt_delay.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,6 +98,7 @@ int main(void)
   //MX_DMA_Init();
   //MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  dwt_init();
   bsp_i2c_init();
 
   /* USER CODE END 2 */
