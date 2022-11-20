@@ -93,9 +93,9 @@ static void i2c1_bus_reset(void) {
  * @return int 
  */
 static int i2c1_check_bus(void) {
-  int ticks = I2C_TIMEOUT;
+  i2c_timeout = I2C_TIMEOUT;
   while ((LL_I2C_IsActiveFlag_ARLO(I2C1) || LL_I2C_IsActiveFlag_BERR(I2C1) || LL_I2C_IsActiveFlag_BUSY(I2C1))) {
-    if (ticks-- == 0) {
+    if (i2c_timeout-- == 0) {
       i2c1_bus_reset();  
       return I2C_ERR_BUS;
     }
