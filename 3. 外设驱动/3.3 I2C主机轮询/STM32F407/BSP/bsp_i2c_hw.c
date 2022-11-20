@@ -8,6 +8,8 @@
 #define i2c_delay_us(us)        dwt_delay_us(us)
 #define i2c_delay_ms(ms)        dwt_delay_ms(ms)
 
+static int  i2c_timeout;
+
 /********************************************** 函数声明 **********************************************/
 
 static void i2c1_bus_reset(void);
@@ -114,14 +116,15 @@ int i2c_master_write_poll(uint8_t slave_addr, const uint8_t *src, uint16_t lengt
   while (i2c1_check_bus());                                               // 检查总线
 
   LL_I2C_GenerateStartCondition(I2C1);                                    // 发出起始信号
-  int ticks = I2C_TIMEOUT;
+  i2c_timeout = I2C_TIMEOUT;
   while (!LL_I2C_IsActiveFlag_SB(I2C1)) {                                 // 检查起始信号
-    if (ticks-- == 0) return I2C_ERR_START;
+    if (i2c_timeout-- == 0) return I2C_ERR_START;
   }
 
   LL_I2C_TransmitData8(I2C1, slave_addr | I2C_TRANSMIT_MODE);             // 发送从机地址
+  i2c_timeout = I2C_TIMEOUT;
   while (!LL_I2C_IsActiveFlag_ADDR(I2C1)) {                               // 检查地址响应
-    if (LL_I2C_IsActiveFlag_AF(I2C1)) {
+    if (LL_I2C_IsActiveFlag_AF(I2C1) || i2c_timeout-- == 0) {
       LL_I2C_ClearFlag_AF(I2C1);
       LL_I2C_GenerateStopCondition(I2C1);
       return I2C_ERR_ADDR;
@@ -130,8 +133,9 @@ int i2c_master_write_poll(uint8_t slave_addr, const uint8_t *src, uint16_t lengt
   LL_I2C_ClearFlag_ADDR(I2C1);
 
   for (int i = 0; i < length; i++) {
+    i2c_timeout = I2C_TIMEOUT;
     while (!LL_I2C_IsActiveFlag_TXE(I2C1)) {                              // 检查发送空标志
-      if (LL_I2C_IsActiveFlag_AF(I2C1)) {
+      if (LL_I2C_IsActiveFlag_AF(I2C1) || i2c_timeout-- == 0) {
         LL_I2C_ClearFlag_AF(I2C1);
         LL_I2C_GenerateStopCondition(I2C1);
         return I2C_ERR_NACK;
@@ -139,9 +143,10 @@ int i2c_master_write_poll(uint8_t slave_addr, const uint8_t *src, uint16_t lengt
     }
     LL_I2C_TransmitData8(I2C1, *src++);                                   // 发送数据
   }
-                                                 
+
+  i2c_timeout = I2C_TIMEOUT;                                               
   while (!LL_I2C_IsActiveFlag_TXE(I2C1) || !LL_I2C_IsActiveFlag_BTF(I2C1)) {        
-    if (LL_I2C_IsActiveFlag_AF(I2C1)) {
+    if (LL_I2C_IsActiveFlag_AF(I2C1) || i2c_timeout-- == 0) {
       LL_I2C_ClearFlag_AF(I2C1);
       break;
     }
@@ -163,14 +168,15 @@ int i2c_master_read_poll(uint8_t slave_addr, uint8_t *dst, uint16_t length) {
   while (i2c1_check_bus());                                               // 检查总线
 
   LL_I2C_GenerateStartCondition(I2C1);                                    // 发出起始信号
-  int ticks = I2C_TIMEOUT;
+  i2c_timeout = I2C_TIMEOUT;
   while (!LL_I2C_IsActiveFlag_SB(I2C1)) {                                 // 检查起始信号
-    if (ticks-- == 0) return I2C_ERR_START;
+    if (i2c_timeout-- == 0) return I2C_ERR_START;
   }
 
   LL_I2C_TransmitData8(I2C1, slave_addr | I2C_RECEIVER_MODE);             // 发送从机地址
+  i2c_timeout = I2C_TIMEOUT;
   while (!LL_I2C_IsActiveFlag_ADDR(I2C1)) {                               // 检查地址响应
-    if (LL_I2C_IsActiveFlag_AF(I2C1)) {
+    if (LL_I2C_IsActiveFlag_AF(I2C1) || i2c_timeout-- == 0) {
       LL_I2C_ClearFlag_AF(I2C1);
       LL_I2C_GenerateStopCondition(I2C1);
       return I2C_ERR_ADDR;
@@ -181,14 +187,26 @@ int i2c_master_read_poll(uint8_t slave_addr, uint8_t *dst, uint16_t length) {
   if (length > 1) {
     LL_I2C_AcknowledgeNextData(I2C1, LL_I2C_ACK);                         // 设置ACK应答
     for (int i = 0; i < length - 1; i++) {
-      while (!LL_I2C_IsActiveFlag_RXNE(I2C1));
+      i2c_timeout = I2C_TIMEOUT;
+      while (!LL_I2C_IsActiveFlag_RXNE(I2C1)) {
+        if (i2c_timeout-- == 0) {
+          LL_I2C_GenerateStopCondition(I2C1);
+          return I2C_ERR_RX;
+        }
+      }
       *dst++ = LL_I2C_ReceiveData8(I2C1);                                 // 接收字节数据
     }
   }
 
   LL_I2C_AcknowledgeNextData(I2C1, LL_I2C_NACK);                          // 设置NACK应答
   LL_I2C_GenerateStopCondition(I2C1);                                     // 发送停止信号
-  while (!LL_I2C_IsActiveFlag_RXNE(I2C1));
+  i2c_timeout == I2C_TIMEOUT;
+  while (!LL_I2C_IsActiveFlag_RXNE(I2C1)) {
+    if (i2c_timeout-- == 0) {
+      LL_I2C_GenerateStopCondition(I2C1);
+      return I2C_ERR_RX;
+    }
+  }
   *dst = LL_I2C_ReceiveData8(I2C1);                                       // 接收最后一个字节数据
 
   return I2C_OK;

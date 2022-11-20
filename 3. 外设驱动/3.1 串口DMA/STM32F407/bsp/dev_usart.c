@@ -164,9 +164,13 @@ static uint16_t usart_dmarx_remain_size(uint8_t usart_id) {
  */
 void usart_dmatx_tc_isr(uint8_t usart_id) {
   if (usart_id == DEV_USART1) {
+    while (LL_USART_IsActiveFlag_TC(USART1));
+    LL_DMA_DisableStream(USART1_TX_DMA, USART1_TX_DMA_STREAM);
     LL_USART_DisableDMAReq_TX(USART1);
   }
   else if (usart_id == DEV_USART2) {
+    while (LL_USART_IsActiveFlag_TC(USART2));
+    LL_DMA_DisableStream(USART2_TX_DMA, USART2_TX_DMA_STREAM);
     LL_USART_DisableDMAReq_TX(USART2);
   }
   s_usart_dev[usart_id].status = USART_DMA_IDLE;
