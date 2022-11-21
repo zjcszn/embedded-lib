@@ -1,9 +1,15 @@
 # Library For Embeded System
 
-## 1. Basic Framework
+## 1. Base Framework
 
-## 2. DataStructure & Algorithm
 
-## 3. Peripherals Driver
+
+## 2. DataStructures & Algorithms
+
+
+
+## 3. Peripherals Drivers
+
+
 
 ## 4. Tools
