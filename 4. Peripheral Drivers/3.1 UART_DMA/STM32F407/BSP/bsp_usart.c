@@ -112,7 +112,7 @@ void bsp_usart1_dmatx_config(uint8_t *dmatx_buf_addr, uint32_t data_length) {
 
   LL_DMA_DisableStream(USART1_TX_DMA, USART1_TX_DMA_STREAM);                                                // 关闭DMA数据流
   while (LL_DMA_IsEnabledStream(USART1_TX_DMA, USART1_TX_DMA_STREAM));                                      // 检查DMA数据流是否关闭
-   
+  LL_USART_DisableDMAReq_TX(USART1);                                                                        // 关闭串口TX DMA请求
   LL_DMA_SetChannelSelection(USART1_TX_DMA, USART1_TX_DMA_STREAM, USART1_TX_DMA_CHANNAL);                   // DMA 通道选择：通道4 
   LL_DMA_SetDataTransferDirection(USART1_TX_DMA, USART1_TX_DMA_STREAM, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);  // DMA 数据传输方向：内存->外设
   LL_DMA_SetStreamPriorityLevel(USART1_TX_DMA, USART1_TX_DMA_STREAM, LL_DMA_PRIORITY_MEDIUM);               // DMA 数据流优先级：MEDIUM
