@@ -99,7 +99,7 @@ int i2c_read_dma(uint8_t slave_addr, uint8_t *buf_addr, uint16_t buf_size) {
   i2c_dev.direction       = I2C_RX;
   i2c_dev.slave_addr      = slave_addr;
   i2c_dev.error           = I2C_OK;
-  i2c_dev.mem_addr_bytes  = 0;
+  i2c_dev.mem_addr_en     = 0;
   i2c_dev.data_buf_addr   = buf_addr;
   i2c_dev.data_buf_size   = buf_size;
   i2c_dev.state           = I2C_START; 
