@@ -91,6 +91,7 @@ void soft_i2c_master_start(void) {
   I2C_SDA_HIGH();
   I2C_DELAY();
   I2C_SDA_LOW();
+  I2C_SCL_LOW();
 }
 
 /**
