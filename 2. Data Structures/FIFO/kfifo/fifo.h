@@ -45,7 +45,7 @@ extern "C" {
 typedef uint32_t fifo_t;
 
 typedef struct _fifo{
-        uint8_t *buf;   // 环形缓冲区地址
+        uint8_t *buf;   // 缓冲区地址
         fifo_t  size;   // 缓冲区大小
         fifo_t  mask;   // 下标掩码
   __IO  fifo_t  in;     // 写指针
