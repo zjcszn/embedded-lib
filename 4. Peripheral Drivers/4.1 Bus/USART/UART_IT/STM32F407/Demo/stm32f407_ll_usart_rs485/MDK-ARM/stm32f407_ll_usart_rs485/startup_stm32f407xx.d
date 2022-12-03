@@ -1,1 +1,0 @@
-stm32f407_ll_usart_rs485\startup_stm32f407xx.o: startup_stm32f407xx.s
