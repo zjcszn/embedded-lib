@@ -109,7 +109,7 @@ void button_poll(void) {
 }
 
 /**
- * @brief update hardware layer status
+ * @brief update hardware layer button status
  * 
  * @param 
  */
@@ -117,7 +117,7 @@ static void hbtn_status_update(void) {
   for (int i = 0; i < HBUTTON_COUNT; i++) {
     if (check_hbtn_status(i)) {
       if (++(hbtn_list[i].filter_cnt) >= TICKS_FILTER) {
-        // reverse status
+        // reverse hbutton status
         hbtn_status ^= HBTN_MASK(i);
         hbtn_list[i].filter_cnt = 0;
       }      
