@@ -1,177 +1,182 @@
 #include "multi_menu.h"
 #include <string.h>
+#include "stdio.h"
 
-#define MENU_SHOW_ITEM_NUM        (4U)  // 菜单窗口显示的条项数量
-#define MENU_DEPTH                (3U)  // 菜单层级 
-#define MENU_STACK_SIZE           (MENU_DEPTH - 1) // multi menu 堆栈大小
-
-// 按键事件获取函数
-static int (*menu_read_keyevent)(void) = NULL;
-// 菜单窗口全局配置信息
-
-#define REFRESH_NO      0
-#define REFRESH_ALL     1
-#define REFRESH_PART    2
+#define MENU_MAX_ITEMS            (2U)    // max num of display items
+#define MENU_DEPTH                (3U)    // menu level 
+#define MENU_STACK_SIZE           (MENU_DEPTH - 1) // menu stack size
 
 
-static MenuShowConf menu_show_conf;
-static uint8_t  menu_show_refresh;
+
+
+
+static MenuList   menu_list;              // pointer of menu list
+static uint32_t   menu_count;             // nums of menu item
+
+static volatile MenuConfig menu_display;  // info of menu display
+static volatile uint32_t   refresh_flag;   
+
+
+// menu stack
 static struct {
-  MenuShowConf stack[MENU_STACK_SIZE];
-  uint8_t sp;
+  MenuConfig stack[MENU_STACK_SIZE];
+  volatile uint8_t sp;
 } menu_stack = {0};
 
-static MenuPage menu_list[] = {
-  /* 菜单ID, 菜单名, 子菜单指针, 左菜单指针, 右菜单指针, 功能函数指针} */
-  {0x00, "Main Menu", NULL, NULL, NULL, NULL},
-  {0x01, "Menu 1",    NULL, NULL, NULL, NULL},
-  {0x11, "Menu 1_1",  NULL, NULL, NULL, NULL},
-  {0x12, "Menu 1_2",  NULL, NULL, NULL, NULL},
-  {0x02, "Menu 2",    NULL, NULL, NULL, NULL},
-  {0x03, "Menu 3",    NULL, NULL, NULL, NULL},
-  {0x04, "Menu 4",    NULL, NULL, NULL, NULL},
+// read key
+static uint8_t (*menu_readkey)(void);
 
-};
+// 
+static void (*menu_ui_callback)(void);
 
-/********************* 私有函数声明 **********************/
 
-static int  menu_show_conf_push(void);
-static int  menu_show_conf_pop(void);
-static int  menu_process(void);
-static void menu_show_conf_init(MenuPage *cur_page);
+/********************* private function declaration **********************/
+
+static int  menu_display_push(void);
+static int  menu_display_pop(void);
+static void menu_display_init(Position cur_page);
 static void menu_show(void);
+static void menu_display_init(Position cur_menu);
+
+/*********************** function  ************************/
 
 
-/*********************** 函数定义 ************************/
 
-
-void menu_read_keyevent_register(int (*callback)(void)) {
-  menu_read_keyevent = callback;
-}
-
-static int menu_process(void) {
-  menu_show_refresh = REFRESH_NO;
-  int key = menu_keyevent();
-  switch (key) {
-    case MENU_KEY_UP:
-      if (menu_show_conf.cur_item->l_sibling != NULL) {
-        menu_show_refresh = REFRESH_PART;
-        if (menu_show_conf.cur_item == menu_show_conf.head_item) {
-          menu_show_conf.head_item = menu_show_conf.head_item->l_sibling;
-          menu_show_conf.tail_item = menu_show_conf.tail_item->l_sibling;
-          menu_show_refresh = REFRESH_ALL;
-        }
-        menu_show_conf.cur_item = menu_show_conf.cur_item->l_sibling;
-      }
-      break;
-
-    case MENU_KEY_DOWN:
-      if (menu_show_conf.cur_item->r_sibling != NULL) {
-        menu_show_refresh = REFRESH_PART;
-        if (menu_show_conf.cur_item == menu_show_conf.tail_item) {
-          menu_show_conf.head_item == menu_show_conf.head_item->r_sibling;
-          menu_show_conf.tail_item == menu_show_conf.tail_item->r_sibling;
-          menu_show_refresh = REFRESH_ALL;
-        }
-        menu_show_conf.cur_item = menu_show_conf.cur_item->r_sibling;
-      }
-      break;
-
-    case MENU_KEY_ENTER:
-      if (menu_show_conf.cur_item->child != NULL) {
-        menu_show_conf.cur_item->cb(NULL);
-      }
-      else {
-        menu_show_conf_push();
-        menu_show_conf_init(menu_show_conf.cur_item);
-        menu_show_refresh = REFRESH_ALL;
-      }
-      break;
-
-    case MENU_KEY_ESC:
-      menu_show_conf_pop();
-      menu_show_refresh = REFRESH_ALL;
-      /*
-      if cur_page.id = 0
-      add code to exit menu loop
-      */
-      break;
-
-    default:
-      break;
+/**
+ * @brief init menu tree
+ * 
+ * @param list       menu list  
+ * @param items_num  items num
+ * @param readkey_cb pointer of 'menu_readkey' callback function
+ */
+void menu_init(MenuList list, uint32_t items_num, uint8_t(*readkey_cb)(void)) {
+  if (list == NULL || readkey_cb == NULL) return;
+  menu_list  = list;
+  menu_count = items_num;
+  Position target;
+  for (int i = 0; i < items_num; i++) {
+    target = &menu_list[i];
+    target->child  = find_menu_node((target->id << 4U) + 1);
+    if (target->id) {
+      target->left   = find_menu_node(target->id - 1);
+      target->right  = find_menu_node(target->id + 1);
+    }
+    else {
+      target->left = target->right = NULL;
+    }
   }
-
-  return key;
+  menu_readkey = readkey_cb;
+  menu_display_init(&menu_list[0]);
 }
 
-static void menu_show_conf_init(MenuPage *dst_page) {
-  menu_show_conf.cur_page  = dst_page;
-  menu_show_conf.cur_item  = dst_page->child;
-  menu_show_conf.head_item = menu_show_conf.cur_item;
-  menu_show_conf.tail_item = menu_show_conf.cur_item;
-  for (int i = 1; i < MENU_SHOW_ITEM_NUM; i++) {
-    if (menu_show_conf.tail_item->r_sibling) {
-      menu_show_conf.tail_item =  menu_show_conf.tail_item->r_sibling;
+/**
+ * @brief init menu display
+ * 
+ * @param cur_menu current menu page
+ */
+static void menu_display_init(Position cur_menu) {
+  menu_display.cur_menu  = cur_menu;
+  menu_display.cur_item  = cur_menu->child;
+  menu_display.head = menu_display.cur_item;
+  menu_display.tail = menu_display.cur_item;
+  for (int i = 1; i < MENU_MAX_ITEMS; i++) {
+    if (menu_display.tail->right) {
+      menu_display.tail = menu_display.tail->right;
     }
     else break;
   }
+  refresh_flag = REFRESH_ALL;
 }
 
-void menu_init(MenuPage *menu_page_arr, menu_t num) {
-  MenuPage *target;
-  for (int i = 0; i < num; i++) {
-    target = &menu_page_arr[i];    
-    target->child  = page_id_to_pointer((target->id << 4U) + 1);
-    target->l_sibling  = target->id ? page_id_to_pointer(target->id - 1) : NULL;
-    target->r_sibling  = target->id ? page_id_to_pointer(target->id + 1) : NULL;
-  }
-}
+/**
+ * @brief Handling of key operations
+ * 
+ * @return int key value
+ */
+static void menu_process(void) {
+  int key_val = menu_readkey();
 
-MenuPage *pageid_to_pointer(menu_t id, MenuPage *page_list, menu_t page_num) {
-  for (int i = 0; i < page_num; i++) {
-    if (page_list[i].id == id) {
-      return &page_list[i];
-    }  
+  if (key_val == MENU_KEY_NULL) {
+    refresh_flag = REFRESH_NO;
+    return;
   }
-  return NULL;
+  else if (key_val == MENU_KEY_UP) {
+    if (menu_display.cur_item->left != NULL) {
+      if (menu_display.cur_item == menu_display.head) {
+        refresh_flag = REFRESH_ALL;
+        menu_display.head = menu_display.head->left;
+        menu_display.tail = menu_display.tail->left;
+      }
+      menu_display.cur_item = menu_display.cur_item->left;
+    }
+  }
+  else if (key_val == MENU_KEY_DOWN) {
+    if (menu_display.cur_item->right != NULL) {
+      if (menu_display.cur_item == menu_display.tail) {
+        refresh_flag = REFRESH_ALL;
+        menu_display.head = menu_display.head->right;
+        menu_display.tail = menu_display.tail->right;
+      }
+      menu_display.cur_item = menu_display.cur_item->right;
+    }
+  }
+  else if (key_val == MENU_KEY_ENTER) {
+    if (menu_display.cur_item->child == NULL) {
+      if (menu_display.cur_item->op != NULL) {
+        menu_display.cur_item->op(NULL);
+      }
+    }
+    else {
+      menu_display_push();
+      menu_display_init(menu_display.cur_item);
+    }
+  } 
+  else if (key_val == MENU_KEY_QUIT) {
+    menu_display_pop();
+    refresh_flag = REFRESH_ALL;
+  }
 }
 
 void menu_loop(void) {
-  
-  if (menu_process() != 0) {
-    menu_show();
+  if (refresh_flag != REFRESH_NO) {
+    menu_ui_callback();
   }
 
 }
 
-static void menu_show(void) {
-  switch (menu_show_refresh) {
-    case REFRESH_NO:
-      /* add code */
-      break;
 
-    case REFRESH_ALL:
-      /* add code */
-      break;
-      
-    case REFRESH_PART:
-      /* add code */
-      break;
+/**
+ * @brief push menu display config into stack
+ * 
+ * @return int success on 1 | failed on 0
+ */
+static int menu_display_push(void) {
+  if (menu_stack.sp >= MENU_STACK_SIZE) return 0;
+  memcpy(&menu_stack.stack[menu_stack.sp++], &menu_display, sizeof(MenuConfig));
+  return 1;
+}
 
-    default:
-      break;
+/**
+ * @brief pop menu display config from stack
+ * 
+ * @return int success on 1 | failed on 0
+ */
+static int menu_display_pop(void) {
+  if (!menu_stack.sp) return 0;
+  memcpy(&menu_display, &menu_stack.stack[--menu_stack.sp], sizeof(MenuConfig));
+  return 1;
+}
+
+
+/**
+ * @brief find menu node
+ * 
+ * @param target_id target menu id
+ * @return Position pointer of menu node
+ */
+static Position find_menu_node(uint32_t target_id) {
+  for(int i = 1; i < menu_count; i++) {
+    if (menu_list[i].id == target_id) return &menu_list[i];
   }
-}
-
-
-static int menu_show_conf_push(void) {
-  if (menu_stack.sp >= MENU_STACK_SIZE) return -1;
-  memcpy(&menu_stack.stack[menu_stack.sp++], &menu_show_conf, sizeof(MenuShowConf));
-  return 0;
-}
-
-static int menu_show_conf_pop(void) {
-  if (!menu_stack.sp) return -1;
-  memcpy(&menu_show_conf, &menu_stack.stack[--menu_stack.sp], sizeof(MenuShowConf));
-  return 0;
+  return NULL;
 }

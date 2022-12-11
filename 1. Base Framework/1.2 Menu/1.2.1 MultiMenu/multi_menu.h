@@ -3,38 +3,47 @@
 
 #include <stdint.h>
 
+struct menu_node;
+struct menu_disp;
+typedef struct menu_node  MenuNode;
+typedef struct menu_node *Position;
+typedef struct menu_node *MenuList;
+typedef struct menu_disp  MenuConfig;
 
-typedef uint32_t menu_t;
-typedef struct _menu_item MenuPage;
-typedef struct _menu_item MenuItem;
-typedef struct _menu_show_conf  MenuShowConf;
-typedef int (*MenuCallback)(void *);
+typedef void (*Callback)(void *);
 
-enum ENUM_MENU_KEY {
-  MENU_KEY_UP = 1,  // 上移
-  MENU_KEY_DOWN,    // 下移
-  MENU_KEY_ENTER,   // 进入菜单
-  MENU_KEY_ESC,     // 退出菜单
-  /* 用户自定义 */
+enum ENUM_RefreshFlag {
+  REFRESH_NO,
+  REFRESH_PART,
+  REFRESH_ALL,
 };
 
 
-struct _menu_item {
-  menu_t id;              // Page ID
-  const char *name;       // Page 名称
-  MenuItem   *child;      // 子菜单项
-  MenuItem   *l_sibling;  // 左兄弟菜单项
-  MenuItem   *r_sibling;  // 右兄弟菜单项   
-  MenuCallback cb;        // 回调函数
+enum ENUM_MenuKey {
+  MENU_KEY_NULL,
+  MENU_KEY_UP,  
+  MENU_KEY_DOWN,    
+  MENU_KEY_ENTER,   
+  MENU_KEY_QUIT,     
 };
 
-struct _menu_show_conf {
-  MenuPage *cur_page;     // 当前菜单页
-  MenuPage *cur_item;     // 当前选中子项
-  MenuPage *head_item;    
-  MenuPage *tail_item;    
+struct menu_node{
+  uint32_t    id;        // menu id
+  const char *text;      // menu name
+  Callback    op;        // operate function
+  Position    child;
+  Position    left;
+  Position    right;
 };
 
-void menu_init(MenuPage *page_list, menu_t page_num);
+struct menu_disp{
+  Position cur_menu;     // current menu page
+  Position cur_item;     // current menu item
+  Position head;         // display item head
+  Position tail;         // display item tail
+};
 
+void menu_init(MenuList menu_list, uint32_t num);
+void menu_loop(void);
+void bsp_menu_task(void * args);
 #endif
