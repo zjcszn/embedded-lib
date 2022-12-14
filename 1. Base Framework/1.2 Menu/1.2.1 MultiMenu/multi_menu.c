@@ -2,7 +2,7 @@
 #include <string.h>
 #include "stdio.h"
 
-#define MENU_MAX_ITEMS            (2U)    // max num of display items
+#define MENU_DISP_MAX_ITEMS       (2U)    // max num of display items
 #define MENU_DEPTH                (3U)    // menu level 
 #define MENU_STACK_SIZE           (MENU_DEPTH - 1) // menu stack size
 
@@ -11,9 +11,9 @@
 
 
 static MenuList   menu_list;              // pointer of menu list
-static uint32_t   menu_count;             // nums of menu item
+static uint32_t   menu_nums;             // nums of menu item
 
-static volatile MenuConfig menu_display;  // info of menu display
+static volatile MenuConfig menu_config;  // info of menu display
 static volatile uint32_t   refresh_flag;   
 
 
@@ -26,35 +26,34 @@ static struct {
 // read key
 static uint8_t (*menu_readkey)(void);
 
-// 
-static void (*menu_ui_callback)(void);
+// menu display
+static void    (*menu_display)(MenuConfig *);
 
 
-/********************* private function declaration **********************/
+/********************* Private Function Declaration **********************/
 
-static int  menu_display_push(void);
-static int  menu_display_pop(void);
-static void menu_display_init(Position cur_page);
-static void menu_show(void);
-static void menu_display_init(Position cur_menu);
+static void menu_display_init(MenuNode *cur_page);
+static void menu_key_handler(void);
+static void menu_ui_handler(void);
+static int  menu_config_push(void);
+static int  menu_config_pop(void);
 
-/*********************** function  ************************/
+/************************* Function Definition ***************************/
 
 
 
 /**
  * @brief init menu tree
  * 
- * @param list       menu list  
- * @param items_num  items num
- * @param readkey_cb pointer of 'menu_readkey' callback function
+ * @param menu_list  pointer of menu list  
+ * @param menu_nums  number of menu item
  */
-void menu_init(MenuList list, uint32_t items_num, uint8_t(*readkey_cb)(void)) {
-  if (list == NULL || readkey_cb == NULL) return;
-  menu_list  = list;
-  menu_count = items_num;
-  Position target;
-  for (int i = 0; i < items_num; i++) {
+void menu_init(MenuList _menu_list, uint32_t _menu_nums) {
+  if (_menu_list == NULL) return;
+  menu_list = _menu_list;
+  menu_nums = _menu_nums;
+  MenuNode *target;
+  for (int i = 0; i < _menu_nums; i++) {
     target = &menu_list[i];
     target->child  = find_menu_node((target->id << 4U) + 1);
     if (target->id) {
@@ -65,82 +64,99 @@ void menu_init(MenuList list, uint32_t items_num, uint8_t(*readkey_cb)(void)) {
       target->left = target->right = NULL;
     }
   }
-  menu_readkey = readkey_cb;
-  menu_display_init(&menu_list[0]);
+  menu_display_init(&menu_list[0], MENU_DISP_MAX_ITEMS);
 }
 
 /**
  * @brief init menu display
  * 
- * @param cur_menu current menu page
+ * @param _cur_page current menu page
+ * @param _item_num max number of menu item in the display list
  */
-static void menu_display_init(Position cur_menu) {
-  menu_display.cur_menu  = cur_menu;
-  menu_display.cur_item  = cur_menu->child;
-  menu_display.head = menu_display.cur_item;
-  menu_display.tail = menu_display.cur_item;
-  for (int i = 1; i < MENU_MAX_ITEMS; i++) {
-    if (menu_display.tail->right) {
-      menu_display.tail = menu_display.tail->right;
+static void menu_display_init(MenuNode *_cur_page, uint32_t _item_num) {
+  menu_config.item_num = _item_num; 
+  menu_config.cur_page = _cur_page;
+  menu_config.cur_item = _cur_page->child;
+  menu_config.head = menu_config.cur_item;
+  menu_config.tail = menu_config.cur_item;
+  for (int i = 1; i < _item_num; i++) {
+    if (menu_config.tail->right) {
+      menu_config.tail = menu_config.tail->right;
     }
     else break;
   }
-  refresh_flag = REFRESH_ALL;
+  refresh_flag = MENU_REFRESH_FULL;
 }
 
 /**
- * @brief Handling of key operations
+ * @brief Handling of message operations
  * 
- * @return int key value
  */
-static void menu_process(void) {
-  int key_val = menu_readkey();
+static void menu_msg_handler(void) {
+  int msg =  menu_msg_dequeue();
+  if (msg == MENU_MSG_NULL) return;
 
-  if (key_val == MENU_KEY_NULL) {
-    refresh_flag = REFRESH_NO;
-    return;
-  }
-  else if (key_val == MENU_KEY_UP) {
-    if (menu_display.cur_item->left != NULL) {
-      if (menu_display.cur_item == menu_display.head) {
-        refresh_flag = REFRESH_ALL;
-        menu_display.head = menu_display.head->left;
-        menu_display.tail = menu_display.tail->left;
+  switch (msg) {
+
+    case MENU_MSG_UP:
+      if (menu_config.cur_item->left != NULL) {
+        refresh_flag = MENU_REFRESH_FULL;
+        if (menu_config.cur_item == menu_config.head) {
+          menu_config.head = menu_config.head->left;
+          menu_config.tail = menu_config.tail->left;
+        }
+        menu_config.cur_item = menu_config.cur_item->left;
       }
-      menu_display.cur_item = menu_display.cur_item->left;
-    }
-  }
-  else if (key_val == MENU_KEY_DOWN) {
-    if (menu_display.cur_item->right != NULL) {
-      if (menu_display.cur_item == menu_display.tail) {
-        refresh_flag = REFRESH_ALL;
-        menu_display.head = menu_display.head->right;
-        menu_display.tail = menu_display.tail->right;
+      break;
+
+    case MENU_MSG_DOWN:
+      if (menu_config.cur_item->right != NULL) {
+        refresh_flag = MENU_REFRESH_FULL;
+        if (menu_config.cur_item == menu_config.tail) {
+          menu_config.head = menu_config.head->right;
+          menu_config.tail = menu_config.tail->right;
+        }
+        menu_config.cur_item = menu_config.cur_item->right;
       }
-      menu_display.cur_item = menu_display.cur_item->right;
-    }
-  }
-  else if (key_val == MENU_KEY_ENTER) {
-    if (menu_display.cur_item->child == NULL) {
-      if (menu_display.cur_item->op != NULL) {
-        menu_display.cur_item->op(NULL);
+      break;
+
+    case MENU_MSG_ENTER:
+      if (menu_config.cur_item->child == NULL) {
+        if (menu_config.cur_item->op != NULL) {
+          menu_config.cur_item->op(NULL);
+        }
       }
-    }
-    else {
-      menu_display_push();
-      menu_display_init(menu_display.cur_item);
-    }
-  } 
-  else if (key_val == MENU_KEY_QUIT) {
-    menu_display_pop();
-    refresh_flag = REFRESH_ALL;
+      else {
+        menu_config_push();
+        menu_display_init(menu_config.cur_item, MENU_DISP_MAX_ITEMS);
+      }
+      break;
+
+    case MENU_MSG_ESC:
+      refresh_flag = MENU_REFRESH_FULL;
+      menu_config_pop();
+      break;
   }
 }
 
 void menu_loop(void) {
-  if (refresh_flag != REFRESH_NO) {
-    menu_ui_callback();
+  menu_msg_handler();
+  if (refresh_flag != MENU_REFRESH_NO) {
+    menu_ui_handler();
+    refresh_flag = MENU_REFRESH_NO;
   }
+}
+
+static void menu_ui_handler(void) {
+    
+}
+
+
+static int menu_msg_dequeue(void) {
+
+}
+
+static int menu_msg_enqueue(void) {
 
 }
 
@@ -150,7 +166,7 @@ void menu_loop(void) {
  * 
  * @return int success on 1 | failed on 0
  */
-static int menu_display_push(void) {
+static int menu_config_push(void) {
   if (menu_stack.sp >= MENU_STACK_SIZE) return 0;
   memcpy(&menu_stack.stack[menu_stack.sp++], &menu_display, sizeof(MenuConfig));
   return 1;
@@ -161,7 +177,7 @@ static int menu_display_push(void) {
  * 
  * @return int success on 1 | failed on 0
  */
-static int menu_display_pop(void) {
+static int menu_config_pop(void) {
   if (!menu_stack.sp) return 0;
   memcpy(&menu_display, &menu_stack.stack[--menu_stack.sp], sizeof(MenuConfig));
   return 1;
@@ -172,10 +188,10 @@ static int menu_display_pop(void) {
  * @brief find menu node
  * 
  * @param target_id target menu id
- * @return Position pointer of menu node
+ * @return MenuNode *pointer of menu node
  */
-static Position find_menu_node(uint32_t target_id) {
-  for(int i = 1; i < menu_count; i++) {
+static MenuNode *find_menu_node(uint32_t target_id) {
+  for(int i = 1; i < menu_nums; i++) {
     if (menu_list[i].id == target_id) return &menu_list[i];
   }
   return NULL;
