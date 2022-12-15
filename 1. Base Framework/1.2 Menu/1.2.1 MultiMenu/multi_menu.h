@@ -3,12 +3,25 @@
 
 #include <stdint.h>
 
-struct menu_node;
-struct menu_disp;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*************************** Macro Definition ***************************/
+
+#ifndef __IO
+#define __IO volatile
+#endif
+
+#ifndef NULL
+#define NULL ((void*)0U)
+#endif
+
+/*************************** Type Declaration ***************************/
+
 typedef struct menu_node    MenuNode;
 typedef struct menu_node   *MenuList;
 typedef struct menu_config  MenuConfig;
-
 typedef void (*MenuFunc)(void *);
 
 enum ENUM_MenuRefresh {
@@ -16,7 +29,6 @@ enum ENUM_MenuRefresh {
   MENU_REFRESH_PART,
   MENU_REFRESH_FULL,
 };
-
 
 enum ENUM_MenuMessage {
   MENU_MSG_NULL,
@@ -43,7 +55,15 @@ struct menu_config{
   uint32_t  item_num;  // max number of item in the display list       
 };
 
-void menu_init(MenuList menu_list, uint32_t num);
-void menu_loop(void);
-void bsp_menu_task(void * args);
+/********************* Extern Function Declaration **********************/
+
+extern void menu_init(MenuList _menu_list, uint32_t _menu_nums);
+extern void menu_loop(void);
+extern int  menu_msg_enqueue(uint8_t _menu_msg);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
