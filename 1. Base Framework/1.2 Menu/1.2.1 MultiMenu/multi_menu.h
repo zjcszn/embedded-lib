@@ -22,6 +22,7 @@ extern "C" {
 typedef struct menu_node    MenuNode;
 typedef struct menu_node   *MenuList;
 typedef struct menu_config  MenuConfig;
+typedef void (*MenuUI_Handler)(MenuConfig *);
 typedef void (*MenuFunc)(void *);
 
 enum ENUM_MenuRefresh {
@@ -57,7 +58,7 @@ struct menu_config{
 
 /********************* Extern Function Declaration **********************/
 
-extern void menu_init(MenuList _menu_list, uint32_t _menu_nums);
+void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler *ui_callback);
 extern void menu_loop(void);
 extern int  menu_msg_enqueue(uint8_t _menu_msg);
 

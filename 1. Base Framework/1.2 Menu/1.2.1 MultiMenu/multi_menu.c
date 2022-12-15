@@ -8,13 +8,13 @@
 
 /**************************** Private Variable ***************************/
 
-static MenuList   menu_list;                // pointer of menu list
-static uint32_t   menu_nums;                // number  of menu item
+static MenuList menu_list;                  // pointer of menu list
+static uint32_t menu_nums;                  // number  of menu item
 
-static volatile MenuConfig menu_config;     // config  of menu display
-static volatile uint32_t   refresh_flag;    // menu ui refresh flag
+static MenuConfig menu_config;              // config  of menu display
+static uint32_t   refresh_flag;             // menu ui refresh flag
 
-static void (*menu_ui_handler)(MenuConfig *config) = NULL;
+static MenuUI_Handler  menu_ui_handler = NULL;
 
 /*************************** Menu Config Stack ***************************/
 
@@ -72,7 +72,7 @@ static MenuNode *find_menu_node(uint32_t target_id);
  * @param menu_list  pointer of menu list  
  * @param menu_nums  number of menu item
  */
-void menu_init(MenuList _menu_list, uint32_t _menu_nums, void (*ui_callback)(MenuConfig *)) {
+void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler ui_callback) {
   if (_menu_list == NULL || ui_callback == NULL) return;
   menu_list = _menu_list;
   menu_nums = _menu_nums;
@@ -130,11 +130,10 @@ static void menu_display_init(MenuNode *_cur_page, uint32_t _item_num) {
  * 
  */
 static void menu_msg_handler(void) {
-  int msg;
+  uint8_t msg;
   if (!menu_msg_dequeue(&msg)) return;
 
   switch (msg) {
-
     case MENU_MSG_UP:
       if (menu_config.cur_item->left != NULL) {
         refresh_flag = MENU_REFRESH_FULL;
@@ -211,7 +210,7 @@ int menu_msg_enqueue(uint8_t _menu_msg) {
  */
 static int menu_config_push(void) {
   if (menu_cfg_stack.sp >= MENU_CFG_STACK_SIZE) return 0;
-  memcpy(&menu_cfg_stack.stack[menu_cfg_stack.sp++], &menu_config, sizeof(MenuConfig));
+  memcpy(&menu_cfg_stack.stack[menu_cfg_stack.sp++], (void *)&menu_config, sizeof(MenuConfig));
   return 1;
 }
 
@@ -222,7 +221,7 @@ static int menu_config_push(void) {
  */
 static int menu_config_pop(void) {
   if (!menu_cfg_stack.sp) return 0;
-  memcpy(&menu_config, &menu_cfg_stack.stack[--menu_cfg_stack.sp], sizeof(MenuConfig));
+  memcpy((void *)&menu_config, &menu_cfg_stack.stack[--menu_cfg_stack.sp], sizeof(MenuConfig));
   return 1;
 }
 
