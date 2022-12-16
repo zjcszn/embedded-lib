@@ -53,12 +53,12 @@ struct menu_config{
   MenuNode *cur_item;  // current selected item
   MenuNode *head;      // head of display list
   MenuNode *tail;      // tail of display list
-  uint32_t  item_num;  // max number of item in the display list       
+//uint32_t  max_disp;  // max number of item in the display list       
 };
 
 /********************* Extern Function Declaration **********************/
 
-void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler *ui_callback);
+extern void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler *ui_callback);
 extern void menu_loop(void);
 extern int  menu_msg_enqueue(uint8_t _menu_msg);
 

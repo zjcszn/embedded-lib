@@ -1,4 +1,5 @@
 #include "multi_menu.h"
+#include <assert.h>
 #include <string.h>
 
 /**************************** Macro Definition ***************************/
@@ -6,13 +7,14 @@
 #define MENU_DISP_MAX_ITEMS       (2U)      // max number of display items
 #define MENU_TREE_DEPTH           (3U)      // max level  of menu tree
 
+#define menu_assert(exp)          assert(exp)
 /**************************** Private Variable ***************************/
 
 static MenuList menu_list;                  // pointer of menu list
-static uint32_t menu_nums;                  // number  of menu item
+static uint32_t menu_nums;                  // number  of menu node
 
-static MenuConfig menu_config;              // config  of menu display
-static uint32_t   refresh_flag;             // menu ui refresh flag
+static MenuConfig  menu_config;             // config  of menu display
+static uint32_t    refresh_flag;            // menu ui refresh flag
 
 static MenuUI_Handler  menu_ui_handler = NULL;
 
@@ -54,8 +56,7 @@ static inline int is_fifo_full(void) {
 
 /********************* Private Function Declaration **********************/
 
-
-static void menu_display_init(MenuNode *_cur_page, uint32_t _item_num);
+static void menu_display_init(MenuNode *_cur_page, uint32_t _max_disp);
 static void menu_msg_handler(void);
 static int  menu_msg_dequeue(uint8_t *_menu_msg);
 static int  menu_config_push(void);
@@ -73,7 +74,7 @@ static MenuNode *find_menu_node(uint32_t target_id);
  * @param menu_nums  number of menu item
  */
 void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler ui_callback) {
-  if (_menu_list == NULL || ui_callback == NULL) return;
+  menu_assert(_menu_list && ui_callback);
   menu_list = _menu_list;
   menu_nums = _menu_nums;
   MenuNode *target;
@@ -108,15 +109,16 @@ void menu_loop(void) {
  * @brief init menu display
  * 
  * @param _cur_page current menu page
- * @param _item_num max number of menu item in the display list
+ * @param _max_disp max number of menu item in the display list
  */
-static void menu_display_init(MenuNode *_cur_page, uint32_t _item_num) {
-  menu_config.item_num = _item_num; 
+static void menu_display_init(MenuNode *_cur_page, uint32_t _max_disp) {
+  menu_assert(_cur_page && _cur_page->child);
+//menu_config.max_disp = _max_disp; 
   menu_config.cur_page = _cur_page;
   menu_config.cur_item = _cur_page->child;
   menu_config.head = menu_config.cur_item;
   menu_config.tail = menu_config.cur_item;
-  for (int i = 1; i < _item_num; i++) {
+  for (int i = 1; i < _max_disp; i++) {
     if (menu_config.tail->right) {
       menu_config.tail = menu_config.tail->right;
     }
@@ -183,6 +185,7 @@ static void menu_msg_handler(void) {
  * @return int success on 1 | failed on 0
  */
 static int menu_msg_dequeue(uint8_t *_menu_msg) {
+  menu_assert(_menu_msg);
   if (is_fifo_empty()) return 0;
   *_menu_msg = menu_msg_fifo.msg_buf[menu_msg_fifo.r & MENU_MSG_FIFO_MASK];
   menu_msg_fifo.r++;
