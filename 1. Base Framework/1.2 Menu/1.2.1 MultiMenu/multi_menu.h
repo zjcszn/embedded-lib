@@ -56,7 +56,7 @@ typedef void (*MenuUI_Handler)(MenuConfig *);
 typedef void (*MenuFunc)(void *);
 
 enum ENUM_MenuRefresh {
-  MENU_REFRESH_NO,
+  MENU_REFRESH_NULL,
   MENU_REFRESH_PART,
   MENU_REFRESH_FULL,
 };
@@ -88,7 +88,8 @@ struct menu_config{
 
 /************************** Extern Function Declaration ***************************/
 
-extern void menu_init(MenuList _menu_list, uint32_t _menu_nums, MenuUI_Handler *ui_callback);
+extern void menu_init(MenuList _menu_list, uint32_t _menu_count, MenuUI_Handler ui_callback);
+
 extern void menu_loop(void);
 extern int  menu_msg_enqueue(uint8_t _menu_msg);
 
