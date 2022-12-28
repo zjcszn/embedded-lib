@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "fonts.h"
+#include "stm32f4xx_ll_gpio.h"
 
 
 #ifdef __cplusplus
@@ -26,15 +27,21 @@ typedef enum {
     D2U_R2L = 7,
 } NT35510_ScanDirEnum;
 
+
+
 typedef enum {
     NT35510_DISP_PORTRAIT  = 0,
     NT35510_DISP_LANDSCAPE = 1,
 } NT35510_DispDirEnum;
 
+
+
 typedef struct {
   __IO uint16_t REG;
   __IO uint16_t RAM;
 } NT35510_AddressTypedef;
+
+
 
 typedef struct {
   uint16_t  width;
@@ -58,6 +65,24 @@ typedef struct {
 #define NT35510_WIDTH                 ((uint16_t)480)     /* LCD PIXEL WIDTH   */
 #define NT35510_HEIGHT                ((uint16_t)800)     /* LCD PIXEL HEIGHT  */
 
+#define NT35510_BACKLIGHT_PIN         LL_GPIO_PIN_15
+#define NT35510_BACKLIGHT_PORT        GPIOB
+
+/**
+ * @brief lcd display backlight power on
+ * 
+ */
+static inline void NT35510_BacklightON(void) {
+  LL_GPIO_SetOutputPin(NT35510_BACKLIGHT_PORT, NT35510_BACKLIGHT_PIN);
+}
+
+/**
+ * @brief lcd display backlight power off
+ * 
+ */
+static inline void NT35510_BacklightOFF(void) {
+  LL_GPIO_ResetOutputPin(NT35510_BACKLIGHT_PORT, NT35510_BACKLIGHT_PIN);
+}
 
 /* LCD Color -----------------------------------------------------------------*/
 
