@@ -39,8 +39,8 @@ void soft_i2c_init(void) {
   GPIO_InitStruct.Pin = SOFT_I2C_SDA_PIN;                       // I2C SDA PIN
   LL_GPIO_Init(SOFT_I2C_SDA_PORT, &GPIO_InitStruct);            // I2C SDA PIN初始化
 
-  I2C_SDA_HIGH();
   I2C_SCL_HIGH();
+  I2C_SDA_HIGH();
 }
 
 /**
