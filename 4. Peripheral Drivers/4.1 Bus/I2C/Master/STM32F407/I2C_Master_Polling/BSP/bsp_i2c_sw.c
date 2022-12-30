@@ -53,7 +53,7 @@ void soft_i2c_init(void) {
  */
 int soft_i2c_master_write(uint8_t slave_addr, const uint8_t *src, uint16_t length) {
   soft_i2c_master_start();
-  if (soft_i2c_master_send_byte(slave_addr)) return SOFT_I2C_ERR_ADDR;
+  if (soft_i2c_master_send_byte(slave_addr & 0xFE)) return SOFT_I2C_ERR_ADDR;
   for (int i = 0; i < length; i++) {
     if (soft_i2c_master_send_byte(*src++)) return SOFT_I2C_ERR_NACK;
   }
@@ -71,7 +71,7 @@ int soft_i2c_master_write(uint8_t slave_addr, const uint8_t *src, uint16_t lengt
  */
 int soft_i2c_master_read(uint8_t slave_addr, uint8_t *dst, uint16_t length) {
   soft_i2c_master_start();
-  if (soft_i2c_master_send_byte(slave_addr | 1)) return SOFT_I2C_ERR_ADDR;
+  if (soft_i2c_master_send_byte(slave_addr | 0x01)) return SOFT_I2C_ERR_ADDR;
   for (int i = 0; i < length - 1; i++) {
     *dst++ = soft_i2c_master_recv_byte();
     soft_i2c_master_send_ack();
