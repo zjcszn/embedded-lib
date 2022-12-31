@@ -179,7 +179,7 @@ static void NT35510_WriteMultiData(uint16_t *buffer, uint32_t length) {
  */
 void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   uint32_t read_id = NT35510_ReadID();
-  NT35510_LOG("LCD Controller Manufacture ID: %4x\r\n", read_id); 
+  NT35510_LOG("LCD Controller Manufacture ID: 0x%04X\r\n", read_id); 
   if (read_id != 0x8000) {
     NT35510_LOG("[ERROR]: Manufacture ID Error!\r\n");
     return;
@@ -960,14 +960,23 @@ void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   NT35510_WriteReg(0xC904, 0x50);
   NT35510_WriteReg(0x3500, 0x00);
   NT35510_WriteReg(0x3A00, 0x55);  // 16-bit/pixel
+
   // Sleep out
-  NT35510_WriteCmd(0x1100);
+  NT35510_WriteCmd(NT35510_CMD_SLPOUT);
   NT35510_Delay(1);
+
   // Display on
-  NT35510_WriteCmd(0x2900);
+  NT35510_WriteCmd(NT35510_CMD_DISPON);
+
+  // Set display direction
   NT35510_SetDispDirection(disp_dir);
+
+  // Set display font color & background color
   NT35510_SetTextColor(LCD_COLOR_BLACK, LCD_COLOR_WHITE);
+
+  // Set LCD backlight ON
   NT35510_BacklightON();
+  
   NT35510_LOG("LCD Controller Initialize Success\r\n");
 }
 
