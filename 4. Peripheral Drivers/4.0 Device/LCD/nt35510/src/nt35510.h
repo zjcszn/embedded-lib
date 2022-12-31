@@ -55,6 +55,7 @@ typedef struct {
 
 /* Export Macro Definetion ---------------------------------------------------*/
 
+#define NT35510_USE_LOG               1
 
 /* Macro definetion of NT35510 Memory Address*/
 #define NT35510_APOS                  6UL                     
@@ -115,6 +116,7 @@ static inline void NT35510_BacklightOFF(void) {
 /* NT35510 Export Function Declaration ---------------------------------------*/
 
 uint16_t NT35510_ReadID(void);
+uint16_t NT35510_ReadPoint(uint16_t x, uint16_t y);
 
 void NT35510_Init(NT35510_DispDirEnum disp_dir);
 void NT35510_DisplayON(void);
@@ -138,6 +140,7 @@ void NT35510_DrawRectangleFill(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y
 void NT35510_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font);
 void NT35510_WriteString(uint16_t x, uint16_t y, char *str, FontDef font);
 void NT35510_DrawRGBImage(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t *buffer);
+void NT35510_ColorFill(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t *color_p);
 
 
 #ifdef __cplusplus

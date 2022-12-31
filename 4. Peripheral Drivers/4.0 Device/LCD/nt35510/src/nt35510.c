@@ -1,7 +1,6 @@
 #include "nt35510.h"
 #include "stm32f4xx_hal.h"
 
-
 /* Private variable definition --------------------------------------------------*/
 
 
@@ -10,6 +9,12 @@ static NT35510_ParamsTypedef          nt35510_params;
 
 /* Private macro definition --------------------------------------------------*/
 
+#if       NT35510_USE_LOG
+#include  <stdio.h>
+#define   NT35510_LOG(...)            printf(__VA_ARGS__)
+#else
+#define   NT35510_LOG(...)            ((void)0U)
+#endif
 
 #define NT35510_Delay(ms)             HAL_Delay(ms);
 
@@ -173,10 +178,13 @@ static void NT35510_WriteMultiData(uint16_t *buffer, uint32_t length) {
  * @param disp_dir NT35510_DISP_PORTRAIT | NT35510_DISP_LANDSCAPE
  */
 void NT35510_Init(NT35510_DispDirEnum disp_dir) {
-  if (NT35510_ReadID() != 0x8000) {
-    // LOG("Error ID")
+  uint32_t read_id = NT35510_ReadID();
+  NT35510_LOG("LCD Controller Manufacture ID: %4x\r\n", read_id); 
+  if (read_id != 0x8000) {
+    NT35510_LOG("[ERROR]: Manufacture ID Error!\r\n");
     return;
   }
+  NT35510_LOG("LCD Controller Model: NT35510\r\n");
   nt35510_params.id = 0x5510;
 
   NT35510_Delay(10);
@@ -186,60 +194,102 @@ void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   NT35510_WriteReg(0xF002, 0x52);
   NT35510_WriteReg(0xF003, 0x08);
   NT35510_WriteReg(0xF004, 0x01);
+
   // AVDD Set AVDD 5.2V
   NT35510_WriteReg(0xB000, 0x0D);
   NT35510_WriteReg(0xB001, 0x0D);
   NT35510_WriteReg(0xB002, 0x0D);
+
   // AVDD ratio
   NT35510_WriteReg(0xB600, 0x34);
   NT35510_WriteReg(0xB601, 0x34);
   NT35510_WriteReg(0xB602, 0x34);
+
   //AVEE -5.2V
   NT35510_WriteReg(0xB100, 0x0D);
   NT35510_WriteReg(0xB101, 0x0D);
   NT35510_WriteReg(0xB102, 0x0D);
-  //AVEE ratio
-  NT35510_WriteReg(0xB700, 0x34);
+
+  /*AVEE ratio old
+  NT35510_WriteReg(0xB700, 0x34);   
   NT35510_WriteReg(0xB701, 0x34);
   NT35510_WriteReg(0xB702, 0x34);
+  */
+  //AVEE ratio
+  NT35510_WriteReg(0xB700, 0x35);   
+  NT35510_WriteReg(0xB701, 0x35);
+  NT35510_WriteReg(0xB702, 0x35);
+
   //VCL -2.5V
   NT35510_WriteReg(0xB200, 0x00);
   NT35510_WriteReg(0xB201, 0x00);
   NT35510_WriteReg(0xB202, 0x00);
+
   //VCL ratio
   NT35510_WriteReg(0xB800, 0x24);
   NT35510_WriteReg(0xB801, 0x24);
   NT35510_WriteReg(0xB802, 0x24);
-  //VGH 15V (Free pump)
+
+  /*VGH 15V (Free pump) old
   NT35510_WriteReg(0xBF00, 0x01);
   NT35510_WriteReg(0xB300, 0x0F);
   NT35510_WriteReg(0xB301, 0x0F);
   NT35510_WriteReg(0xB302, 0x0F);
+  */
+  //VGH 15V (Free pump) new
+  NT35510_WriteReg(0xBF00, 0x01);
+  NT35510_WriteReg(0xB300, 0x08);
+  NT35510_WriteReg(0xB301, 0x08);
+  NT35510_WriteReg(0xB302, 0x08);
+
   //VGH ratio
   NT35510_WriteReg(0xB900, 0x34);
   NT35510_WriteReg(0xB901, 0x34);
   NT35510_WriteReg(0xB902, 0x34);
+
   //VGL_REG -10V
   NT35510_WriteReg(0xB500, 0x08);
   NT35510_WriteReg(0xB501, 0x08);
   NT35510_WriteReg(0xB502, 0x08);
   NT35510_WriteReg(0xC200, 0x03);
+
   //VGLX ratio
   NT35510_WriteReg(0xBA00, 0x24);
   NT35510_WriteReg(0xBA01, 0x24);
   NT35510_WriteReg(0xBA02, 0x24);
-  //VGMP/VGSP 4.5V/0V
+
+  /*VGMP/VGSP 4.5V/0V
   NT35510_WriteReg(0xBC00, 0x00);
   NT35510_WriteReg(0xBC01, 0x78);
   NT35510_WriteReg(0xBC02, 0x00);
-  //VGMN/VGSN -4.5V/0V
+  */
+  //VGMP/VGSP 4.7V/0V
+  NT35510_WriteReg(0xBC00, 0x00);
+  NT35510_WriteReg(0xBC01, 0x88);
+  NT35510_WriteReg(0xBC02, 0x00);
+
+
+  /*VGMN/VGSN -4.5V/0V
   NT35510_WriteReg(0xBD00, 0x00);
   NT35510_WriteReg(0xBD01, 0x78);
   NT35510_WriteReg(0xBD02, 0x00);
-  //VCOM
+  */
+  //VGMN/VGSN -4.7V/0V
+  NT35510_WriteReg(0xBD00, 0x00);
+  NT35510_WriteReg(0xBD01, 0x88);
+  NT35510_WriteReg(0xBD02, 0x00);
+
+  /*VCOM old
   NT35510_WriteReg(0xBE00, 0x00);
   NT35510_WriteReg(0xBE01, 0x64);
+  */
+  //VCOM -2.0375V
+  NT35510_WriteReg(0xBE00, 0x00);
+  NT35510_WriteReg(0xBE01, 0xA3);
+
   //Gamma Setting
+
+  /*
   NT35510_WriteReg(0xD100, 0x00);
   NT35510_WriteReg(0xD101, 0x33);
   NT35510_WriteReg(0xD102, 0x00);
@@ -557,6 +607,327 @@ void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   NT35510_WriteReg(0xD631, 0x33);
   NT35510_WriteReg(0xD632, 0x03);
   NT35510_WriteReg(0xD633, 0x6D);
+  */
+
+  /* Reference: NT35510 Application Notes*/
+
+  NT35510_WriteReg(0xD100, 0x00);
+  NT35510_WriteReg(0xD101, 0x05);     
+  NT35510_WriteReg(0xD102, 0x00);
+  NT35510_WriteReg(0xD103, 0x40);     
+  NT35510_WriteReg(0xD104, 0x00);
+  NT35510_WriteReg(0xD105, 0x6D);     
+  NT35510_WriteReg(0xD106, 0x00);
+  NT35510_WriteReg(0xD107, 0x90);     
+  NT35510_WriteReg(0xD108, 0x00);
+  NT35510_WriteReg(0xD109, 0x99);  
+  NT35510_WriteReg(0xD10A, 0x00);
+  NT35510_WriteReg(0xD10B, 0xBB);     
+  NT35510_WriteReg(0xD10C, 0x00);
+  NT35510_WriteReg(0xD10D, 0xDC);     
+  NT35510_WriteReg(0xD10E, 0x01);     
+  NT35510_WriteReg(0xD10F, 0x04);     
+  NT35510_WriteReg(0xD110, 0x01);
+  NT35510_WriteReg(0xD111, 0x25);     
+  NT35510_WriteReg(0xD112, 0x01);
+  NT35510_WriteReg(0xD113, 0x59);     
+  NT35510_WriteReg(0xD114, 0x01);
+  NT35510_WriteReg(0xD115, 0x82);
+  NT35510_WriteReg(0xD116, 0x01);
+  NT35510_WriteReg(0xD117, 0xC6);     
+  NT35510_WriteReg(0xD118, 0x02);
+  NT35510_WriteReg(0xD119, 0x01);     
+  NT35510_WriteReg(0xD11A, 0x02);
+  NT35510_WriteReg(0xD11B, 0x02);     
+  NT35510_WriteReg(0xD11C, 0x02);
+  NT35510_WriteReg(0xD11D, 0x39);     
+  NT35510_WriteReg(0xD11E, 0x02);
+  NT35510_WriteReg(0xD11F, 0x79);     
+  NT35510_WriteReg(0xD120, 0x02);
+  NT35510_WriteReg(0xD121, 0xA1);
+  NT35510_WriteReg(0xD122, 0x02);
+  NT35510_WriteReg(0xD123, 0xD9);
+  NT35510_WriteReg(0xD124, 0x03);
+  NT35510_WriteReg(0xD125, 0x00);
+  NT35510_WriteReg(0xD126, 0x03);
+  NT35510_WriteReg(0xD127, 0x38);
+  NT35510_WriteReg(0xD128, 0x03);
+  NT35510_WriteReg(0xD129, 0x67);
+  NT35510_WriteReg(0xD12A, 0x03);
+  NT35510_WriteReg(0xD12B, 0x8F);
+  NT35510_WriteReg(0xD12C, 0x03);
+  NT35510_WriteReg(0xD12D, 0xCD);
+  NT35510_WriteReg(0xD12E, 0x03);
+  NT35510_WriteReg(0xD12F, 0xFD);
+  NT35510_WriteReg(0xD130, 0x03);
+  NT35510_WriteReg(0xD131, 0xFE);
+  NT35510_WriteReg(0xD132, 0x03);
+  NT35510_WriteReg(0xD133, 0xFF);
+
+  NT35510_WriteReg(0xD200, 0x00);
+  NT35510_WriteReg(0xD201, 0x33);
+  NT35510_WriteReg(0xD202, 0x00);
+  NT35510_WriteReg(0xD203, 0x34);
+  NT35510_WriteReg(0xD204, 0x00);
+  NT35510_WriteReg(0xD205, 0x3A);
+  NT35510_WriteReg(0xD206, 0x00);
+  NT35510_WriteReg(0xD207, 0x90);
+  NT35510_WriteReg(0xD208, 0x00);
+  NT35510_WriteReg(0xD209, 0x99);
+  NT35510_WriteReg(0xD20A, 0x00);
+  NT35510_WriteReg(0xD20B, 0xBB);
+  NT35510_WriteReg(0xD20C, 0x00);
+  NT35510_WriteReg(0xD20D, 0xDC);
+  NT35510_WriteReg(0xD20E, 0x01);
+  NT35510_WriteReg(0xD20F, 0x04);
+  NT35510_WriteReg(0xD210, 0x01);
+  NT35510_WriteReg(0xD211, 0x25);
+  NT35510_WriteReg(0xD212, 0x01);
+  NT35510_WriteReg(0xD213, 0x59);
+  NT35510_WriteReg(0xD214, 0x01);
+  NT35510_WriteReg(0xD215, 0x82);
+  NT35510_WriteReg(0xD216, 0x01);
+  NT35510_WriteReg(0xD217, 0xC6);
+  NT35510_WriteReg(0xD218, 0x02);
+  NT35510_WriteReg(0xD219, 0x01);
+  NT35510_WriteReg(0xD21A, 0x02);
+  NT35510_WriteReg(0xD21B, 0x02);
+  NT35510_WriteReg(0xD21C, 0x02);
+  NT35510_WriteReg(0xD21D, 0x39);
+  NT35510_WriteReg(0xD21E, 0x02);
+  NT35510_WriteReg(0xD21F, 0x79);
+  NT35510_WriteReg(0xD220, 0x02);
+  NT35510_WriteReg(0xD221, 0xA1);
+  NT35510_WriteReg(0xD222, 0x02);
+  NT35510_WriteReg(0xD223, 0xD9);
+  NT35510_WriteReg(0xD224, 0x03);
+  NT35510_WriteReg(0xD225, 0x00);
+  NT35510_WriteReg(0xD226, 0x03);
+  NT35510_WriteReg(0xD227, 0x38);
+  NT35510_WriteReg(0xD228, 0x03);
+  NT35510_WriteReg(0xD229, 0x67);
+  NT35510_WriteReg(0xD22A, 0x03);
+  NT35510_WriteReg(0xD22B, 0x8F);
+  NT35510_WriteReg(0xD22C, 0x03);
+  NT35510_WriteReg(0xD22D, 0xCD);
+  NT35510_WriteReg(0xD22E, 0x03);
+  NT35510_WriteReg(0xD22F, 0xFD);
+  NT35510_WriteReg(0xD230, 0x03);
+  NT35510_WriteReg(0xD231, 0xFE);
+  NT35510_WriteReg(0xD232, 0x03);
+  NT35510_WriteReg(0xD233, 0xFF);
+
+  NT35510_WriteReg(0xD300, 0x00);
+  NT35510_WriteReg(0xD301, 0x33);
+  NT35510_WriteReg(0xD302, 0x00);
+  NT35510_WriteReg(0xD303, 0x34);
+  NT35510_WriteReg(0xD304, 0x00);
+  NT35510_WriteReg(0xD305, 0x3A);
+  NT35510_WriteReg(0xD306, 0x00);
+  NT35510_WriteReg(0xD307, 0x90);
+  NT35510_WriteReg(0xD308, 0x00);
+  NT35510_WriteReg(0xD309, 0x99);
+  NT35510_WriteReg(0xD30A, 0x00);
+  NT35510_WriteReg(0xD30B, 0xBB);
+  NT35510_WriteReg(0xD30C, 0x00);
+  NT35510_WriteReg(0xD30D, 0xDC);
+  NT35510_WriteReg(0xD30E, 0x01);
+  NT35510_WriteReg(0xD30F, 0x04);
+  NT35510_WriteReg(0xD310, 0x01);
+  NT35510_WriteReg(0xD311, 0x25);
+  NT35510_WriteReg(0xD312, 0x01);
+  NT35510_WriteReg(0xD313, 0x59);
+  NT35510_WriteReg(0xD314, 0x01);
+  NT35510_WriteReg(0xD315, 0x82);
+  NT35510_WriteReg(0xD316, 0x01);
+  NT35510_WriteReg(0xD317, 0xC6);
+  NT35510_WriteReg(0xD318, 0x02);
+  NT35510_WriteReg(0xD319, 0x01);
+  NT35510_WriteReg(0xD31A, 0x02);
+  NT35510_WriteReg(0xD31B, 0x02);
+  NT35510_WriteReg(0xD31C, 0x02);
+  NT35510_WriteReg(0xD31D, 0x39);
+  NT35510_WriteReg(0xD31E, 0x02);
+  NT35510_WriteReg(0xD31F, 0x79);
+  NT35510_WriteReg(0xD320, 0x02);
+  NT35510_WriteReg(0xD321, 0xA1);
+  NT35510_WriteReg(0xD322, 0x02);
+  NT35510_WriteReg(0xD323, 0xD9);
+  NT35510_WriteReg(0xD324, 0x03);
+  NT35510_WriteReg(0xD325, 0x00);
+  NT35510_WriteReg(0xD326, 0x03);
+  NT35510_WriteReg(0xD327, 0x38);
+  NT35510_WriteReg(0xD328, 0x03);
+  NT35510_WriteReg(0xD329, 0x67);
+  NT35510_WriteReg(0xD32A, 0x03);
+  NT35510_WriteReg(0xD32B, 0x8F);
+  NT35510_WriteReg(0xD32C, 0x03);
+  NT35510_WriteReg(0xD32D, 0xCD);
+  NT35510_WriteReg(0xD32E, 0x03);
+  NT35510_WriteReg(0xD32F, 0xFD);
+  NT35510_WriteReg(0xD330, 0x03);
+  NT35510_WriteReg(0xD331, 0xFE);
+  NT35510_WriteReg(0xD332, 0x03);
+  NT35510_WriteReg(0xD333, 0xFF);
+
+  NT35510_WriteReg(0xD400, 0x00);
+  NT35510_WriteReg(0xD401, 0x33);
+  NT35510_WriteReg(0xD402, 0x00);
+  NT35510_WriteReg(0xD403, 0x34);
+  NT35510_WriteReg(0xD404, 0x00);
+  NT35510_WriteReg(0xD405, 0x3A);
+  NT35510_WriteReg(0xD406, 0x00);
+  NT35510_WriteReg(0xD407, 0x90);
+  NT35510_WriteReg(0xD408, 0x00);
+  NT35510_WriteReg(0xD409, 0x99);
+  NT35510_WriteReg(0xD40A, 0x00);
+  NT35510_WriteReg(0xD40B, 0xBB);
+  NT35510_WriteReg(0xD40C, 0x00);
+  NT35510_WriteReg(0xD40D, 0xDC);
+  NT35510_WriteReg(0xD40E, 0x01);
+  NT35510_WriteReg(0xD40F, 0x04);
+  NT35510_WriteReg(0xD410, 0x01);
+  NT35510_WriteReg(0xD411, 0x25);
+  NT35510_WriteReg(0xD412, 0x01);
+  NT35510_WriteReg(0xD413, 0x59);
+  NT35510_WriteReg(0xD414, 0x01);
+  NT35510_WriteReg(0xD415, 0x82);
+  NT35510_WriteReg(0xD416, 0x01);
+  NT35510_WriteReg(0xD417, 0xC6);
+  NT35510_WriteReg(0xD418, 0x02);
+  NT35510_WriteReg(0xD419, 0x01);
+  NT35510_WriteReg(0xD41A, 0x02);
+  NT35510_WriteReg(0xD41B, 0x02);
+  NT35510_WriteReg(0xD41C, 0x02);
+  NT35510_WriteReg(0xD41D, 0x39);
+  NT35510_WriteReg(0xD41E, 0x02);
+  NT35510_WriteReg(0xD41F, 0x79);
+  NT35510_WriteReg(0xD420, 0x02);
+  NT35510_WriteReg(0xD421, 0xA1);
+  NT35510_WriteReg(0xD422, 0x02);
+  NT35510_WriteReg(0xD423, 0xD9);
+  NT35510_WriteReg(0xD424, 0x03);
+  NT35510_WriteReg(0xD425, 0x00);
+  NT35510_WriteReg(0xD426, 0x03);
+  NT35510_WriteReg(0xD427, 0x38);
+  NT35510_WriteReg(0xD428, 0x03);
+  NT35510_WriteReg(0xD429, 0x67);
+  NT35510_WriteReg(0xD42A, 0x03);
+  NT35510_WriteReg(0xD42B, 0x8F);
+  NT35510_WriteReg(0xD42C, 0x03);
+  NT35510_WriteReg(0xD42D, 0xCD);
+  NT35510_WriteReg(0xD42E, 0x03);
+  NT35510_WriteReg(0xD42F, 0xFD);
+  NT35510_WriteReg(0xD430, 0x03);
+  NT35510_WriteReg(0xD431, 0xFE);
+  NT35510_WriteReg(0xD432, 0x03);
+  NT35510_WriteReg(0xD433, 0xFF);
+
+  NT35510_WriteReg(0xD500, 0x00);
+  NT35510_WriteReg(0xD501, 0x33);
+  NT35510_WriteReg(0xD502, 0x00);
+  NT35510_WriteReg(0xD503, 0x34);
+  NT35510_WriteReg(0xD504, 0x00);
+  NT35510_WriteReg(0xD505, 0x3A);
+  NT35510_WriteReg(0xD506, 0x00);
+  NT35510_WriteReg(0xD507, 0x90);
+  NT35510_WriteReg(0xD508, 0x00);
+  NT35510_WriteReg(0xD509, 0x99);
+  NT35510_WriteReg(0xD50A, 0x00);
+  NT35510_WriteReg(0xD50B, 0xBB);
+  NT35510_WriteReg(0xD50C, 0x00);
+  NT35510_WriteReg(0xD50D, 0xDC);
+  NT35510_WriteReg(0xD50E, 0x01);
+  NT35510_WriteReg(0xD50F, 0x04);
+  NT35510_WriteReg(0xD510, 0x01);
+  NT35510_WriteReg(0xD511, 0x25);
+  NT35510_WriteReg(0xD512, 0x01);
+  NT35510_WriteReg(0xD513, 0x59);
+  NT35510_WriteReg(0xD514, 0x01);
+  NT35510_WriteReg(0xD515, 0x82);
+  NT35510_WriteReg(0xD516, 0x01);
+  NT35510_WriteReg(0xD517, 0xC6);
+  NT35510_WriteReg(0xD518, 0x02);
+  NT35510_WriteReg(0xD519, 0x01);
+  NT35510_WriteReg(0xD51A, 0x02);
+  NT35510_WriteReg(0xD51B, 0x02);
+  NT35510_WriteReg(0xD51C, 0x02);
+  NT35510_WriteReg(0xD51D, 0x39);
+  NT35510_WriteReg(0xD51E, 0x02);
+  NT35510_WriteReg(0xD51F, 0x79);
+  NT35510_WriteReg(0xD520, 0x02);
+  NT35510_WriteReg(0xD521, 0xA1);
+  NT35510_WriteReg(0xD522, 0x02);
+  NT35510_WriteReg(0xD523, 0xD9);
+  NT35510_WriteReg(0xD524, 0x03);
+  NT35510_WriteReg(0xD525, 0x00);
+  NT35510_WriteReg(0xD526, 0x03);
+  NT35510_WriteReg(0xD527, 0x38);
+  NT35510_WriteReg(0xD528, 0x03);
+  NT35510_WriteReg(0xD529, 0x67);
+  NT35510_WriteReg(0xD52A, 0x03);
+  NT35510_WriteReg(0xD52B, 0x8F);
+  NT35510_WriteReg(0xD52C, 0x03);
+  NT35510_WriteReg(0xD52D, 0xCD);
+  NT35510_WriteReg(0xD52E, 0x03);
+  NT35510_WriteReg(0xD52F, 0xFD);
+  NT35510_WriteReg(0xD530, 0x03);
+  NT35510_WriteReg(0xD531, 0xFE);
+  NT35510_WriteReg(0xD532, 0x03);
+  NT35510_WriteReg(0xD533, 0xFF);
+
+  NT35510_WriteReg(0xD600, 0x00);
+  NT35510_WriteReg(0xD601, 0x33);
+  NT35510_WriteReg(0xD602, 0x00);
+  NT35510_WriteReg(0xD603, 0x34);
+  NT35510_WriteReg(0xD604, 0x00);
+  NT35510_WriteReg(0xD605, 0x3A);
+  NT35510_WriteReg(0xD606, 0x00);
+  NT35510_WriteReg(0xD607, 0x90);
+  NT35510_WriteReg(0xD608, 0x00);
+  NT35510_WriteReg(0xD609, 0x99);
+  NT35510_WriteReg(0xD60A, 0x00);
+  NT35510_WriteReg(0xD60B, 0xBB);
+  NT35510_WriteReg(0xD60C, 0x00);
+  NT35510_WriteReg(0xD60D, 0xDC);
+  NT35510_WriteReg(0xD60E, 0x01);
+  NT35510_WriteReg(0xD60F, 0x04);
+  NT35510_WriteReg(0xD610, 0x01);
+  NT35510_WriteReg(0xD611, 0x25);
+  NT35510_WriteReg(0xD612, 0x01);
+  NT35510_WriteReg(0xD613, 0x59);
+  NT35510_WriteReg(0xD614, 0x01);
+  NT35510_WriteReg(0xD615, 0x82);
+  NT35510_WriteReg(0xD616, 0x01);
+  NT35510_WriteReg(0xD617, 0xC6);
+  NT35510_WriteReg(0xD618, 0x02);
+  NT35510_WriteReg(0xD619, 0x01);
+  NT35510_WriteReg(0xD61A, 0x02);
+  NT35510_WriteReg(0xD61B, 0x02);
+  NT35510_WriteReg(0xD61C, 0x02);
+  NT35510_WriteReg(0xD61D, 0x39);
+  NT35510_WriteReg(0xD61E, 0x02);
+  NT35510_WriteReg(0xD61F, 0x79);
+  NT35510_WriteReg(0xD620, 0x02);
+  NT35510_WriteReg(0xD621, 0xA1);
+  NT35510_WriteReg(0xD622, 0x02);
+  NT35510_WriteReg(0xD623, 0xD9);
+  NT35510_WriteReg(0xD624, 0x03);
+  NT35510_WriteReg(0xD625, 0x00);
+  NT35510_WriteReg(0xD626, 0x03);
+  NT35510_WriteReg(0xD627, 0x38);
+  NT35510_WriteReg(0xD628, 0x03);
+  NT35510_WriteReg(0xD629, 0x67);
+  NT35510_WriteReg(0xD62A, 0x03);
+  NT35510_WriteReg(0xD62B, 0x8F);
+  NT35510_WriteReg(0xD62C, 0x03);
+  NT35510_WriteReg(0xD62D, 0xCD);
+  NT35510_WriteReg(0xD62E, 0x03);
+  NT35510_WriteReg(0xD62F, 0xFD);
+  NT35510_WriteReg(0xD630, 0x03);
+  NT35510_WriteReg(0xD631, 0xFE);
+  NT35510_WriteReg(0xD632, 0x03);
+  NT35510_WriteReg(0xD633, 0xFF);
 
   // LV2 Page 0 enable
   NT35510_WriteReg(0xF000, 0x55);
@@ -596,6 +967,7 @@ void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   NT35510_WriteCmd(0x2900);
   NT35510_SetDispDirection(disp_dir);
   NT35510_SetTextColor(LCD_COLOR_BLACK, LCD_COLOR_WHITE);
+  NT35510_LOG("LCD Controller Initialize Success\r\n");
 }
 
 /**
@@ -762,6 +1134,8 @@ void NT35510_SetScanDirection(NT35510_ScanDirEnum scan_dir) {
     }
   }
   NT35510_SetWindow(0, 0, nt35510_params.width, nt35510_params.height);
+  NT35510_LOG("LCD Display Width  Set: %u\r\n", nt35510_params.width);
+  NT35510_LOG("LCD Display Height Set: %u\r\n", nt35510_params.height);
 }
 
 /**
@@ -1039,4 +1413,41 @@ void NT35510_DrawRGBImage(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
   NT35510_WriteMultiData(buffer, width * height);
 }
 
+/**
+ * @brief fill display area by specifies color buffer
+ * 
+ * @param x1 specifies the X bottom left position
+ * @param y1 specifies the Y bottom left position
+ * @param x2 specifies the X top right position
+ * @param y2 specifies the Y top right position
+ * @param color_p color buffer
+ */
+void NT35510_ColorFill(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t *color_p) {
+  NT35510_SetCursor(x1, y1);
+  NT35510_SetCursorEnd(x2, y2);
+  NT35510_WriteCmd(NT35510_CMD_RAMWR);
+  NT35510_WriteMultiData(color_p, (x2 - x1 + 1) * (y2 - y1 + 1));
+}
+
+/**
+ * @brief read gram color data
+ * 
+ * @param x specifies the X position
+ * @param y specifies the X position
+ * @return uint16_t RGB565 color data of specifies point
+ */
+uint16_t NT35510_ReadPoint(uint16_t x, uint16_t y) {
+  uint16_t rgb565;
+  NT35510_SetWindow(x, y, 1, 1);
+  NT35510_WriteCmd(NT35510_CMD_RAMRD);
+  // dummy data
+  for (int i = 0; i < 3; i++) {
+    (void) NT35510_ReadData();
+  }
+  // read color data && convert to rgb565
+  rgb565  = NT35510_ReadData();
+  rgb565  = (rgb565 & 0xF800) | ((rgb565 & 0x00FC) << 3);
+  rgb565 |= (NT35510_ReadData() & 0xF800) >> 11;
+  return rgb565;
+} 
 
