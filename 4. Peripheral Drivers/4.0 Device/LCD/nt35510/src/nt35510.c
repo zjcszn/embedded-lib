@@ -967,6 +967,7 @@ void NT35510_Init(NT35510_DispDirEnum disp_dir) {
   NT35510_WriteCmd(0x2900);
   NT35510_SetDispDirection(disp_dir);
   NT35510_SetTextColor(LCD_COLOR_BLACK, LCD_COLOR_WHITE);
+  NT35510_BacklightON();
   NT35510_LOG("LCD Controller Initialize Success\r\n");
 }
 
@@ -1441,7 +1442,7 @@ uint16_t NT35510_ReadPoint(uint16_t x, uint16_t y) {
   NT35510_SetWindow(x, y, 1, 1);
   NT35510_WriteCmd(NT35510_CMD_RAMRD);
   // dummy data
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 5; i++) {
     (void) NT35510_ReadData();
   }
   // read color data && convert to rgb565
