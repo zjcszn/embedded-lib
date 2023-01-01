@@ -164,6 +164,8 @@ static void soft_i2c_master_start(soft_i2c_dev_t *i2c_dev) {
   I2C_SDA_H(i2c_dev);
   I2C_DELAY(i2c_dev);
   I2C_SDA_L(i2c_dev);
+  I2C_DELAY(i2c_dev);
+  I2C_SCL_L(i2c_dev);
 }
 
 /**
