@@ -4,6 +4,7 @@
 
 /*********************************************** 头文件 **********************************************/
 
+#include <stdint.h>
 #include "stm32f407xx.h"
 #include "stm32f4xx_ll_gpio.h"
 #include "stm32f4xx_ll_bus.h"
