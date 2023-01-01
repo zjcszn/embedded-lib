@@ -313,7 +313,7 @@ static void pwm_gpio_clk_enable(GPIO_TypeDef *gpio_x) {
  */
 static uint32_t pwm_alternate_select(TIM_TypeDef *tim_x) {
   if (tim_x == TIM1 || tim_x == TIM2) return LL_GPIO_AF_1;
-  else if (tim_x == TIM3  || tim_x == TIM5  || tim_x == TIM5) return LL_GPIO_AF_2;
+  else if (tim_x == TIM3  || tim_x == TIM4  || tim_x == TIM5) return LL_GPIO_AF_2;
   else if (tim_x == TIM8  || tim_x == TIM9  || tim_x == TIM10  || tim_x == TIM11) return LL_GPIO_AF_3;
   else if (tim_x == TIM12 || tim_x == TIM13 || tim_x == TIM14) return LL_GPIO_AF_9;
   else return 0;
