@@ -160,8 +160,10 @@ int soft_i2c_master_read(soft_i2c_dev_t *i2c_dev, uint8_t slave_addr, uint8_t *d
  * @param i2c_dev I2C实例
  */
 static void soft_i2c_master_start(soft_i2c_dev_t *i2c_dev) {
-  I2C_SCL_H(i2c_dev);
+  I2C_SCL_L(i2c_dev);
   I2C_SDA_H(i2c_dev);
+  I2C_DELAY(i2c_dev);
+  I2C_SCL_H(i2c_dev);
   I2C_DELAY(i2c_dev);
   I2C_SDA_L(i2c_dev);
   I2C_DELAY(i2c_dev);

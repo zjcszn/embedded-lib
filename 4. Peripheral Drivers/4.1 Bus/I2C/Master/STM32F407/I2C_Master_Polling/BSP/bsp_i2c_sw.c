@@ -87,13 +87,14 @@ int soft_i2c_master_read(uint8_t slave_addr, uint8_t *dst, uint16_t length) {
  * 
  */
 void soft_i2c_master_start(void) {
-  I2C_SCL_HIGH();
+  I2C_SCL_LOW();
   I2C_SDA_HIGH();
+  I2C_DELAY();
+  I2C_SCL_HIGH();
   I2C_DELAY();
   I2C_SDA_LOW();
   I2C_DELAY();
   I2C_SCL_LOW();
-
 }
 
 /**
