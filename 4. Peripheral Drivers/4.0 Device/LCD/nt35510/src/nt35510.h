@@ -55,7 +55,14 @@ typedef struct {
 
 /* Export Macro Definetion ---------------------------------------------------*/
 
+// Use log
 #define NT35510_USE_LOG               1
+
+// If define 1, nt35510 init function will update gamma config
+#define NT35510_UPDATE_GAMMA          1
+
+// Gamma config group
+#define NT35510_GAMMA_CFG_GROUP       1
 
 /* Macro definetion of NT35510 Memory Address*/
 #define NT35510_APOS                  6UL                     
@@ -141,6 +148,7 @@ void NT35510_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font);
 void NT35510_WriteString(uint16_t x, uint16_t y, char *str, FontDef font);
 void NT35510_DrawRGBImage(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t *buffer);
 void NT35510_ColorFill(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t *color_p);
+void NT35510_BacklightSet(uint8_t pwm);
 
 
 #ifdef __cplusplus

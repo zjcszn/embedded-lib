@@ -20,8 +20,8 @@
 static soft_i2c_dev_t Goodix_I2C = {0};
 
 // goodix config register value buffer
-#if GOODIX_CFG_BY_CFG_GROUP
-static uint8_t  Goodix_CFG[GOODIX_CFG_LENGTH] = GOODIX_CFG_GROUP1;
+#if GOODIX_CFG_USE_CFG_GROUP
+static uint8_t  Goodix_CFG[GOODIX_CFG_LENGTH] = GOODIX_CFG_GROUP;
 #else
 static uint8_t  Goodix_CFG[GOODIX_CFG_LENGTH] = {0};
 #endif
@@ -214,7 +214,7 @@ int Goodix_ReadTouch(Goodix_PointTypedef *tp_buf, uint8_t *tp_num) {
         tp_buf[i].x    = (Goodix_RxBuffer[1] << 8) | Goodix_RxBuffer[0];
         tp_buf[i].y    = (Goodix_RxBuffer[3] << 8) | Goodix_RxBuffer[2];
         tp_buf[i].size = (Goodix_RxBuffer[5] << 8) | Goodix_RxBuffer[4]; 
-        #if GOODIX_LOG_TP_POS
+        #if GOODIX_LOG_TOUCHPOINT
         GOODIX_LOG("TP: X->%4u   Y->%4u   Size->%4u\r\n", tp_buf[i].x, tp_buf[i].y, tp_buf[i].size);
         #endif
       }
@@ -230,19 +230,23 @@ int Goodix_ReadTouch(Goodix_PointTypedef *tp_buf, uint8_t *tp_num) {
  * @return int GOODIX_OK on success | GOODIX_ERROR on error
  */
 int Goodix_PrintConfigValue(void) {
-  if (Goodix_ReadConfig() != GOODIX_OK) {
-    return GOODIX_ERROR;
-  }
-  int count = 0;
+  uint8_t cfg_value[10];
+  uint8_t count = 0;
+  uint8_t checksum = 0;
+
   printf("Goodix Controller Config Registers Value:\r\n");
-  for (int i = 0; i < GOODIX_CFG_LENGTH; i++) {
-    printf("0x%02X, ", Goodix_CFG[i]);
-    if (++count == 10) {
-      printf("\r\n");
-      count = 0;
+  for (int i = 0; i < GOODIX_CFG_LENGTH - 1; i++, count++) {
+    count %= 10;
+    if (count == 0) {
+      if (Goodix_I2C_MemRead(GOODIX_REG_CONFIG_DATA + i, cfg_value, 10) != GOODIX_OK) {
+        return GOODIX_ERROR;
+      }
     }
+    checksum += cfg_value[i % 10];
+    printf("0x%02X, ", cfg_value[i % 10]);
+    if (count == 9) printf("\r\n");
   }
-  printf("\r\n");
+  printf("0x00,\r\n%s\r\n", checksum ? "CheckSum Verify Result: Error" : "CheckSum Verify Result: OK");
   return GOODIX_OK;
 }
 
@@ -281,7 +285,7 @@ static int Goodix_Software_Init(Goodix_ConfigTypedef *config) {
   // Soft reset chip
   Goodix_WriteCommand(GOODIX_CMD_SOFTRESET);
 
-  #if GOODIX_CFG_PRINT && !(GOODIX_CFG_OVERWRITE && GOODIX_CFG_BY_CFG_GROUP)
+  #if GOODIX_CFG_PRINT
 
   if (Goodix_PrintConfigValue() != GOODIX_OK) {
     return GOODIX_ERROR;
@@ -291,7 +295,7 @@ static int Goodix_Software_Init(Goodix_ConfigTypedef *config) {
 
   #if GOODIX_CFG_OVERWRITE
 
-  #if GOODIX_CFG_BY_CFG_GROUP == 0
+  #if GOODIX_CFG_USE_CFG_GROUP == 0
   // Read config register value
   if (Goodix_ReadConfig() != GOODIX_OK) {
     return GOODIX_ERROR;
@@ -427,6 +431,3 @@ static int Goodix_SetStatus(uint8_t  status) {
   Goodix_TxBuffer[0] = status;
   return Goodix_I2C_MemWrite(GOODIX_READ_COORD_ADDR, Goodix_TxBuffer, 1);
 }
-
-
-
