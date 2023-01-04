@@ -26,14 +26,11 @@ static uint8_t  Goodix_CFG[GOODIX_CFG_LENGTH] = GOODIX_CFG_GROUP;
 static uint8_t  Goodix_CFG[GOODIX_CFG_LENGTH] = {0};
 #endif
 
-// goodix register address buffer
-static uint8_t  Goodix_REG_Addr[2] = {0};
-
 // goodix i2c rx buffer
-static uint8_t  Goodix_RxBuffer[8] = {0};
+static uint8_t  Goodix_RxBuffer[10] = {0};
 
 // goodix i2c tx buffer
-static uint8_t  Goodix_TxBuffer[8] = {0};
+static uint8_t  Goodix_TxBuffer[ 2] = {0};
 
 /* I2C Operate port -----------------------------------------------------------*/
 
@@ -43,6 +40,7 @@ static uint8_t  Goodix_TxBuffer[8] = {0};
  */
 static void Goodix_I2C_Init(void) {
   // add user init code
+  Goodix_I2C.dev_addr = GOODIX_ADDRESS;
   Goodix_I2C.scl.port = CTP_SCL_PORT;
   Goodix_I2C.scl.pin  = CTP_SCL_PIN;
   Goodix_I2C.sda.port = CTP_SDA_PORT;
@@ -58,7 +56,7 @@ static void Goodix_I2C_Init(void) {
  * @return int GOODIX_OK on write success | GOODIX_ERROR on write error
  */
 static int Goodix_I2C_Write(uint8_t *wr_data, int len) {
-  if (soft_i2c_master_write(&Goodix_I2C, GOODIX_ADDRESS, wr_data, len)) {
+  if (soft_i2c_master_write(&Goodix_I2C, wr_data, len)) {
     return GOODIX_ERROR;
   }
   return GOODIX_OK;
@@ -72,25 +70,37 @@ static int Goodix_I2C_Write(uint8_t *wr_data, int len) {
  * @return int GOODIX_OK on write success | GOODIX_ERROR on write error
  */
 static int Goodix_I2C_Read(uint8_t *rd_data, int len) {
-  if (soft_i2c_master_read(&Goodix_I2C, GOODIX_ADDRESS, rd_data, len)) {
+  if (soft_i2c_master_read(&Goodix_I2C, rd_data, len)) {
     return GOODIX_ERROR;
   }
   return GOODIX_OK;
 }
 
+/**
+ * @brief Write data to goodix register
+ * 
+ * @param reg_addr register address
+ * @param wr_data  data to write
+ * @param data_len length of read data
+ * @return int GOODIX_OK on write success | GOODIX_ERROR on write error
+ */
 static int Goodix_I2C_MemWrite(uint16_t reg_addr, uint8_t *wr_data, int data_len) {
-  Goodix_REG_Addr[0] = (reg_addr & 0xFF00) >> 8;
-  Goodix_REG_Addr[1] =  reg_addr & 0x00FF;
-  if (soft_i2c_master_mem_write(&Goodix_I2C, GOODIX_ADDRESS, Goodix_REG_Addr, 2, wr_data, data_len)) {
+  if (soft_i2c_master_mem_write(&Goodix_I2C, reg_addr, 2, wr_data, data_len)) {
     return GOODIX_ERROR;
   }
   return GOODIX_OK;
 }
 
+/**
+ * @brief Read data from goodix register
+ * 
+ * @param reg_addr register address
+ * @param rd_data  pointer of read buffer
+ * @param data_len length of read data
+ * @return int GOODIX_OK on write success | GOODIX_ERROR on write error
+ */
 static int Goodix_I2C_MemRead(uint16_t reg_addr, uint8_t *rd_data, int data_len) {
-  Goodix_REG_Addr[0] = (reg_addr & 0xFF00) >> 8;
-  Goodix_REG_Addr[1] =  reg_addr & 0x00FF;
-  if (soft_i2c_master_mem_read(&Goodix_I2C, GOODIX_ADDRESS, Goodix_REG_Addr, 2, rd_data, data_len)) {
+  if (soft_i2c_master_mem_read(&Goodix_I2C, reg_addr, 2, rd_data, data_len)) {
     return GOODIX_ERROR;
   }
   return GOODIX_OK;
@@ -230,7 +240,6 @@ int Goodix_ReadTouch(Goodix_PointTypedef *tp_buf, uint8_t *tp_num) {
  * @return int GOODIX_OK on success | GOODIX_ERROR on error
  */
 int Goodix_PrintConfigValue(void) {
-  uint8_t cfg_value[10];
   uint8_t count = 0;
   uint8_t checksum = 0;
 
@@ -238,12 +247,12 @@ int Goodix_PrintConfigValue(void) {
   for (int i = 0; i < GOODIX_CFG_LENGTH - 1; i++, count++) {
     count %= 10;
     if (count == 0) {
-      if (Goodix_I2C_MemRead(GOODIX_REG_CONFIG_DATA + i, cfg_value, 10) != GOODIX_OK) {
+      if (Goodix_I2C_MemRead(GOODIX_REG_CONFIG_DATA + i, Goodix_RxBuffer, 10) != GOODIX_OK) {
         return GOODIX_ERROR;
       }
     }
-    checksum += cfg_value[i % 10];
-    printf("0x%02X, ", cfg_value[i % 10]);
+    checksum += Goodix_RxBuffer[i % 10];
+    printf("0x%02X, ", Goodix_RxBuffer[i % 10]);
     if (count == 9) printf("\r\n");
   }
   printf("0x00,\r\n%s\r\n", checksum ? "CheckSum Verify Result: Error" : "CheckSum Verify Result: OK");
