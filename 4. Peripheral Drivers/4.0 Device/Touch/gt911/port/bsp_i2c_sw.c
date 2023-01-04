@@ -274,7 +274,7 @@ int soft_i2c_master_mem_read(soft_i2c_dev_t *i2c_dev, uint32_t mem_addr, uint16_
  * @param addr_len bytes of register address
  */
 static void soft_i2c_set_mem_addr(soft_i2c_dev_t *i2c_dev, uint32_t mem_addr, uint16_t addr_len) {
-  for (int i = addr_len - 1; i >= 0; i++, mem_addr >>= 8) {
+  for (int i = addr_len - 1; i >= 0; i--, mem_addr >>= 8) {
     i2c_dev->mem_addr[i] = mem_addr & 0xFF;
   }
 }
