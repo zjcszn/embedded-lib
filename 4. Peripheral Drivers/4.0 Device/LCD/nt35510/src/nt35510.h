@@ -65,9 +65,17 @@ typedef struct {
 #define NT35510_GAMMA_CFG_GROUP       1
 
 /* Macro definetion of NT35510 Memory Address*/
-#define NT35510_APOS                  6UL                     
-#define NT35510_BASE                  (0x6C000000UL | ((1UL << (NT35510_APOS + 1UL))) -  2UL)
-#define NT35510                       ((NT35510_AddressTypedef *)NT35510_BASE)
+/* FSMC Memory address
+  - Bank1 (NE1) 0x60000000
+  - Bank2 (NE2) 0x64000000
+  - Bank3 (NE3) 0x68000000
+  - Bank4 (NE4) 0x6C000000
+  - REGSELECT_BIT: if example A18 pin -> 18 
+*/
+#define NT35510_ADDR_BASE             0x6C000000UL
+#define NT35510_REGSELECT_BIT         6                     
+#define NT35510_ADDR                  (NT35510_ADDR_BASE | ((1UL << (NT35510_REGSELECT_BIT + 1UL))) -  2UL)
+#define NT35510                       ((NT35510_AddressTypedef *)NT35510_ADDR)
 
 /* Width and Height in Portrait mode */
 #define NT35510_WIDTH                 ((uint16_t)480)     /* LCD PIXEL WIDTH   */
